@@ -26,7 +26,7 @@ class AdTable extends DataHandler
 	}
 
 	/**/
-	public function cGetIdByExpression( $value )
+	public function cFindPkByExpression( $value )
 	{
 		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 		
@@ -34,7 +34,7 @@ class AdTable extends DataHandler
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 
 		$query  = " SELECT {$this->tablename}_ID FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		echo "<br/> $query <br/>";
+		//echo "<br/> $query <br/>";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -219,7 +219,7 @@ class AdTable extends DataHandler
 		return $values_array;
 	}
 
-	/**/
+	/* Debido a que algunos campos quedan en vacios, se inicializan en 0 o NULL */
 	public function prepareValues( $values_array )
 	{
 		$tmp_obj   = new TAdMig();
@@ -241,7 +241,7 @@ class AdTable extends DataHandler
 		return $values_array;
 	}
 
-	/**/
+	/* prepara y ejecuta insertar de una tabla */
 	public function cPut( $values_array, $save_changes )
 	{
 		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
@@ -273,21 +273,7 @@ class AdTable extends DataHandler
 		echo '<br>** migrando elementos.... **<br>';
 		$elem_obj  = new AdElement();
 		$elem_obj->cMigrateByParentId( $values_array['AD_TABLE_ID'], $save_changes );
-		/*
-		echo '<br>** migrando referencias.... **<br>';
-		$ref_obj  = new AdReference();
-		$ref_obj->load();
-		$last_id_ref = $ref_obj->cLastID() + 1;
-		$ref_list    = $ref_obj->cFindAllByParentId( $id_old );
-		foreach ($ref_list as $reference_name)
-		{
-			$ref_values_array = $ref_obj->cFindByExpression( $reference_name );
-			$tmp_obj->cPut( $ref_values_array['AD_REFERENCE_ID'], $last_id_ref, $ref_values_array['NAME'], $ref_obj->getTablename() );
-			$ref_values_array['AD_REFERENCE_ID'] = $last_id_ref;
-			$ref_obj->cPut( $ref_values_array, $save_changes );
-			$last_id_ref++;
-		}
-		*/
+
 		echo '<br>** migrando valores referenciales.... **<br>';
 		$ref_obj  = new AdReference(); 
 		$ref_obj->cMigrateByParentId( $values_array['AD_TABLE_ID'], $save_changes );
@@ -306,7 +292,17 @@ class AdTable extends DataHandler
 		// guardar ids en tabla temporal		
 		$tmp_obj->cPut( $id_old, $table_id, $values_array['TABLENAME'], $this->tablename );
 		// se prepara consulta de migracion con id nuevo
-		$this->cPut( $this->prepareValues($values_array), $save_changes );	// TODO: verificar si la tabla ya existe (caso migrar por ventana)		
+		$this->cPut( $this->prepareValues($values_array), $save_changes );	// TODO: verificar si la tabla ya existe (caso migrar por ventana)
+
+
+		$datatablename = $this->cFindNameBySPK( $id_old  );
+		if ( !empty($datatablename) )
+		{
+			echo "<br> Tabla $datatablename <br>";
+			echo "<br> fuente: $id_old <br>";		
+			$id_new = $this->cFindPkByExpression( $datatablename );
+			echo "<br> destino: $id_new <br>";
+		}	
 	}
 
 } // end class

@@ -25,6 +25,25 @@ foreach ($data as $item)
 	//print_r($values_array);
 
 	if( !empty($values_array) )
+	{		
+		// se prepara consulta de migracion con id nuevo
+		//$values_array['AD_REFERENCE_ID'] = ; // actualizo al ultimo id
+		$ref_obj->cMigrate( $values_array, $last_id_ref );
+
+		$last_id_ref++;
+	}
+}
+
+/*
+foreach ($data as $item)
+{
+	// echo $item[$expression];
+
+	// se buscan los datos completos de la fila
+	$values_array = $ref_obj->cFindByExpression( $item['UPPER(NAME)'] );
+	//print_r($values_array);
+
+	if( !empty($values_array) )
 	{
 		// Put ( id_original, id_new, value, tablename )
 		$id_old = $values_array['AD_REFERENCE_ID'];
@@ -38,5 +57,5 @@ foreach ($data as $item)
 		$last_id_ref++;
 	}
 }
-
+*/
 ?>

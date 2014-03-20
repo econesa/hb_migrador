@@ -190,7 +190,7 @@ function formatData( $datatype, $value )
 		case 'NVARCHAR2':					
 		case 'CHAR':
 		case 'DATETIME':
-			$return_value = '\'' . $value . '\'';
+			$return_value = '\'' . addslashes($value) . '\'';
 			break;
 		case 'DATE': 
 			$return_value = '\'' . $value . '\'';

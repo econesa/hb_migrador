@@ -189,6 +189,32 @@ abstract class DataHandler
 		return $values_array;
 	}
 
+	/* Busca según el Primary Key de la BD fuente, si no la encuentra devuelve -1. */
+	public function cFindNameBySPK( $pk_id )
+	{
+		$value = '';
+		
+		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+		
+		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
+				    WHERE  {$this->tablename}_ID = $pk_id ";
+		//echo "<br> $query <br>";
+		
+		$stmt  = oci_parse( $connection, $query );
+		oci_execute( $stmt );
+		
+		if ( ($result = oci_fetch_row($stmt)) != false ) 
+		{
+			$value = $result[0];
+		}
+		oci_close($connection);
+
+		return $value;
+	}
+
+
 	/* Calcula la diferencia que hay entre dos entidades y retorna el resultado en formato json */
 	function diferenciar( $page, $rows, $offset )
 	{
