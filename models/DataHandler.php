@@ -214,6 +214,34 @@ abstract class DataHandler
 		return $value;
 	}
 
+	/**/
+	public function cFindPkByExpression( $value )
+	{
+		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+		
+		$rs_id = -1;
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+
+		$query  = " SELECT {$this->tablename}_ID FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
+		//echo "<br/> $query <br/>";
+
+		$stmt = oci_parse( $connection, $query );
+		if ( oci_execute( $stmt ) )
+		{
+			$row = oci_fetch_assoc( $stmt ); 
+			$rs_id = $row[$this->tablename.'_ID'];		
+
+		} // execute 
+		else
+		{
+			$e = oci_error( $stmt ); 
+	        echo $e['message']; 
+		}
+		
+		oci_close($connection);
+		
+		return $rs_id;
+	}
 
 	/* Calcula la diferencia que hay entre dos entidades y retorna el resultado en formato json */
 	function diferenciar( $page, $rows, $offset )
