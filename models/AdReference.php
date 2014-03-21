@@ -277,9 +277,14 @@ class AdReference extends DataHandler
 		$name = $this->cFindNameBySPK( $values_array[ strtoupper($this->tablename).'_ID' ] );
 		if ( !empty($name) )
 		{
-			echo "<br> Tabla $name <br>";
+			echo "<br> Referencia $name <br>";
 			echo '<br> fuente: ' . $values_array[strtoupper($this->tablename).'_ID'] . '<br>';		
 			$id_new = $this->cFindPkByExpression( $name );
+			if ( empty($id_new) )
+			{
+				// migrar
+
+			}
 			echo "<br> destino: $id_new <br>";
 		}
 		/**/
@@ -315,6 +320,7 @@ class AdReference extends DataHandler
 		{
 			echo " elemento extendido <br/>";
 			$tmp_obj->cPut( $values_array['AD_REFERENCE_ID'], $new_ref_id, "{$values_array['NAME']}", self::TABLENAME );
+			$old_ref_id = $values_array['AD_REFERENCE_ID'];
 			$values_array['AD_REFERENCE_ID'] = $new_ref_id;
 			$this->cPut( $values_array, $save_changes );
 			
@@ -323,11 +329,11 @@ class AdReference extends DataHandler
 			switch ($values_array['VALIDATIONTYPE']) 
 			{
 				case "'L'":
-					$this->migrateChildTable($values_array['AD_REFERENCE_ID'], 'AD_REF_LIST');
+					$this->migrateChildTable($old_ref_id, 'AD_REF_LIST');
 					break;
 
 				case "'T'":
-					$this->migrateChildTable($values_array['AD_REFERENCE_ID'], 'AD_REF_TABLE');
+					$this->migrateChildTable($old_ref_id, 'AD_REF_TABLE');
 					break;
 
 				case "'D'":

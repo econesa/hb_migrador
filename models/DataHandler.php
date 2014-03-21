@@ -214,6 +214,31 @@ abstract class DataHandler
 		return $value;
 	}
 
+
+	public function cFindNameByDPK( $pk_id )
+	{
+		$value = '';
+		
+		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+		
+		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
+				    WHERE  {$this->tablename}_ID = $pk_id ";
+		//echo "<br> $query <br>";
+		
+		$stmt  = oci_parse( $connection, $query );
+		oci_execute( $stmt );
+		
+		if ( ($result = oci_fetch_row($stmt)) != false ) 
+		{
+			$value = $result[0];
+		}
+		oci_close($connection);
+
+		return $value;
+	}
+
 	/**/
 	public function cFindPkByExpression( $value )
 	{
