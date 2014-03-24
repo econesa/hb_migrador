@@ -110,7 +110,9 @@ class AdColumn extends DataHandler
 
 		$stmt = oci_parse( $connection, $query );
 		if ( $save_changes && oci_execute( $stmt ) )
-		{}
+		{
+			echo "<br>insertado<br>";
+		}
 		else{ 
 			$e = oci_error($stmt); 
 			echo $e['message'] . '<br/>'; 

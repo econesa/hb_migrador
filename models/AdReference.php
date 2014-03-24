@@ -260,7 +260,7 @@ class AdReference extends DataHandler
 	}
 
 	//Funcion que migra los reference List y Table creados del origen al destino.
-	public function migrateChildTable( $parent_id, $child_tablename, $save_changes = true )
+	public function migrateChildTable( $parent_id, $new_parent_id, $child_tablename, $save_changes = true )
 	{
 		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
 		
@@ -271,6 +271,7 @@ class AdReference extends DataHandler
 		$c2 = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 
 		$values_array = $this->findChildByRefId( $parent_id, $child_tablename );
+		$values_array[ strtoupper($this->tablename).'_ID' ] = $new_parent_id;
 
 		// actualizar cada clave foranea 
 
@@ -329,11 +330,11 @@ class AdReference extends DataHandler
 			switch ($values_array['VALIDATIONTYPE']) 
 			{
 				case "'L'":
-					$this->migrateChildTable($old_ref_id, 'AD_REF_LIST');
+					$this->migrateChildTable($old_ref_id, $new_ref_id, 'AD_REF_LIST');
 					break;
 
 				case "'T'":
-					$this->migrateChildTable($old_ref_id, 'AD_REF_TABLE');
+					$this->migrateChildTable($old_ref_id, $new_ref_id, 'AD_REF_TABLE');
 					break;
 
 				case "'D'":
