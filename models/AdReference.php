@@ -11,7 +11,7 @@ class AdReference extends DataHandler
 	/**/
 	public function getTablename( )
 	{
-		return self::TABLENAME;
+		return $this->tablename;
 	}
 
 	public function load()

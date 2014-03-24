@@ -89,7 +89,7 @@ abstract class DataHandler
 		$tarray = listarTiposDeTabla( $this->connection, $this->tablename );
 
 		$query  = " SELECT COUNT(*) FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		echo " <br> $query <br> ";
+		//echo " <br> $query <br> ";
 
 		$stmt = oci_parse( $this->connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -118,7 +118,7 @@ abstract class DataHandler
 				   JOIN   AD_COLUMN columna ON (columna.{$this->tablename}_ID = t.{$this->tablename}_ID) 
 				   WHERE  columna.{$this->parent_tablename}_ID = $parent_id ";
 		
-		echo "<br> $query <br/>";
+		//echo "<br> $query <br/>";
 		
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) ) 
@@ -154,7 +154,7 @@ abstract class DataHandler
 		$query = " SELECT  t.*
 				   FROM    COMPIERE.{$this->tablename} t
 				   WHERE   {$this->tablename}_ID = {$pk_id} ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 
 		$stmt = oci_parse( $connection, $query );
 

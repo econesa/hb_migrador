@@ -128,7 +128,19 @@ class AdColumn extends DataHandler
 		$values_array = $this->cFindByExpression( $value_name, $table_id );
 		
 		// guardar en tabla temporal	
-		$tmp_obj = new TAdMig();
+		$tmp_obj  = new TAdMig();
+		
+		$elem_obj = new AdElement();
+		$elem_obj->load();
+
+		$ref_obj = new AdReference();
+		$ref_obj->load();
+
+		$vr_obj = new AdValRule();
+		$vr_obj->load();
+
+		$tabla_obj = new AdTable();
+		$tabla_obj->load();
 
 		$values_array['AD_CLIENT_ID'] = 0; 
 		$values_array['AD_ORG_ID'] = 0;	// AD_Org_ID
@@ -137,35 +149,72 @@ class AdColumn extends DataHandler
 		$tmp_obj->cPut( $col_id_old, $column_id, $values_array['COLUMNNAME'], self::TABLENAME );
 
 		//buscar el id table que le corresponde dado el viejo
-		$elemid	 = $values_array['AD_ELEMENT_ID']; // AD_Element_ID
 		$tableid = $values_array['AD_TABLE_ID']; // AD_Table_ID
 		$refid   = $values_array['AD_REFERENCE_ID']; // AD_Reference_ID
 		$ref_value_id = $values_array['AD_REFERENCE_VALUE_ID']; // AD_Reference_ID
 		$vruleid      = $values_array['AD_VAL_RULE_ID']; // AD_Val_Rule_ID
-		/*
-		if ( $elemid >= 5000000 )
+		
+		
+		$name = $this->cFindNameBySPK( $values_array[ strtoupper($this->tablename).'_ID' ] );
+
+		// actualizar al id del elemento del destino
+		$elem_name  = $elem_obj->cFindNameBySPK( $values_array['AD_ELEMENT_ID'] );
+		$new_elemid = $elem_obj->cFindPkByExpression( $elem_name );
+		if ( $new_elemid != -1 )
+			 $values_array[$elem_obj->getTablename() . '_ID'] = $new_elemid;
+		echo "<br/>$elem_name: $new_elemid <br/>";
+
+		// actualizar al id de la referencia del destino
+		$ref_name  = $ref_obj->cFindNameBySPK( $values_array[$ref_obj->getTablename() . '_ID'] );
+		$new_refid = $ref_obj->cFindPkByExpression( $ref_name );
+		if ( $new_refid != -1 )
+			 $values_array[$ref_obj->getTablename() . '_ID'] = $new_refid;
+		echo "<br/> $ref_name: $new_refid <br/>";
+
+		// actualizar al id de la referencia valor del destino
+		$ref_val_name  = $ref_obj->cFindNameBySPK( $values_array[$ref_obj->getTablename() . '_VALUE_ID'] );
+		if ( !empty($ref_val_name) )
 		{
-			$values_array['AD_ELEMENT_ID']  
-		}*/
-		$new_elemid   = $tmp_obj->cGetIDByOldID( 'AD_ELEMENT',  $elemid );	
-		$new_tableid  = $tmp_obj->cGetIDByOldID( 'AD_TABLE', 	$tableid );
-		$new_refid 	  
-		= $tmp_obj->cGetIDByOldID( 'AD_REFERENCE', $refid );
-		$new_refvalueid  = $tmp_obj->cGetIDByOldID( 'AD_REFERENCE', $ref_value_id );
-		$new_vruleid     = $tmp_obj->cGetIDByOldID( 'AD_VAL_RULE',  $vruleid ); 
+			$new_refvalueid = $ref_obj->cFindPkByExpression( $ref_val_name );
+			if ( $new_refvalueid != -1 )
+				 $values_array[$ref_obj->getTablename() . '_VALUE_ID'] = $new_refvalueid;
+			echo "<br/> $ref_val_name: $new_refvalueid <br/>";
+		}
+		else
+			 $values_array[$ref_obj->getTablename() . '_VALUE_ID'] = 'NULL';
+		
+		$values_array['AD_PROCESS_ID'] = 'NULL';
+		
+		// actualizar al id de la validacion dinamica del destino
+		$vrule_name  = $vr_obj->cFindNameBySPK( $values_array[$vr_obj->getTablename() . '_ID'] );
+		if ( !empty($vrule_name) )
+		{
+			$new_vruleid = $vr_obj->cFindPkByExpression( $vrule_name );
+			if ( $new_vruleid != -1 )
+				 $values_array[$vr_obj->getTablename() . '_ID'] = $new_vruleid;
+			echo "<br/> $vrule_name: $new_vruleid <br/>";
+		}
+		else
+			 $values_array[$vr_obj->getTablename() . '_ID'] = 'NULL';
+
+
+		// actualizar al id de la tabla del destino
+		$table_name  = $tabla_obj->cFindNameBySPK( $values_array[$tabla_obj->getTablename() . '_ID'] );
+		if ( !empty($table_name) )
+		{
+			$new_tableid = $tabla_obj->cFindPkByExpression( $table_name );
+			if ( $new_tableid != -1 )
+				 $values_array[$tabla_obj->getTablename() . '_ID'] = $new_tableid;
+			echo "<br/> $table_name: $new_tableid <br/>";
+		}
+		else
+			 $values_array[$tabla_obj->getTablename() . '_ID'] = 'NULL';
+		
+		$values_array['AD_PROCESS_ID'] = 'NULL';
 
 		// se prepara consulta de migracion con id nuevo
-		$values_array['AD_COLUMN_ID'] = $column_id; // actualizo al ultimo id
-		if ( $new_elemid != 0 )
-			 $values_array['AD_ELEMENT_ID'] = $new_elemid;
-		if ( $new_tableid != 0 )
-			 $values_array['AD_TABLE_ID'] = $new_tableid;
-		if ( $new_refid != 0 )
-			 $values_array['AD_REFERENCE_ID'] = $new_refid;
-		if ( $new_refvalueid != 0 )
-			 $values_array['AD_REFERENCE_VALUE_ID'] = $new_refvalueid;
+		$values_array['AD_COLUMN_ID'] = $column_id; // actualizo al ultimo id		
 		
-		//	echo 'Primero: ' . $ref_value_id . ', Segundo: ' .  $values_array['AD_REFERENCE_VALUE_ID'];
 		// se prepara consulta de migracion con id nuevo
 		$this->cPut( $values_array, $save_changes );	
 	}

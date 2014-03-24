@@ -17,7 +17,7 @@ class AdElement extends DataHandler
 
 	public function getTablename()
 	{
-		return self::TABLENAME;
+		return $this->tablename;
 	}
 	
 	public function cGet( $parent_id ) // ver si se utiliza aun 
