@@ -60,6 +60,7 @@ foreach ($data as $item)
 		$gchildren_array = $fld_obj->cFindByParentID( $child_id_old );
 		foreach ($gchildren_array as $gcname)
 		{
+			echo "<br>** migrando field $gcname.... **<br>";
 			// se buscan los datos completos de la fila
 			$gchild_values_array = $fld_obj->cFindByExpression( $gcname, $child_id_old );
 	

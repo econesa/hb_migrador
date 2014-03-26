@@ -65,7 +65,7 @@ class AdTab extends DataHandler
 		//$column_value = $value; // deberia sanitizarse
 		//print_r( $tarray ); 
 		$query = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' AND {$this->parent_tablename}_ID = $parentID ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 		
 		$stmt  = oci_parse( $connection, $query );
 		
@@ -110,7 +110,9 @@ class AdTab extends DataHandler
 		if ( $save_changes )
 		{
 			if ( oci_execute( $stmt ) )
-			{}
+			{
+				echo '<br> insertado <br>';
+			}
 			else{ 
 				$e = oci_error($stmt); 
 				echo $e['message'] . '<br/>'; 
@@ -156,20 +158,33 @@ class AdTab extends DataHandler
 		} // end foreach
 
 		
-		echo '<br>** migrando pestañas.... **<br>';
+		echo "<br>** migrando pestaña {$values_array['NAME']}.... **<br>";
 /*
 		$seq_obj   = new AdSequence(); // TODO: verificar si la secuencia ya existe
 		$seq_array = $seq_obj->cFindByTablename( $values_array['NAME'], $save_changes );
 		$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
 		$seq_obj->cPut( $seq_array, $save_changes );
 */
-		$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
+		//$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
 
 		$values_array['AD_TAB_ID']    = $table_id;
 
 		//verifica que el nombre de la tabla exista en el destino y buscar el valor del id.
-		$values_array['AD_TABLE_ID']  = $table_obj->cFindDPKBySPK( $values_array['AD_TABLE_ID'] );
-
+		$new_table_id = $table_obj->cFindDPKBySPK( $values_array['AD_TABLE_ID'] );
+		if ( strcmp($new_table_id, 'NULL') != 0 ) 
+			$values_array['AD_TABLE_ID']  = $new_table_id;
+		else
+		{
+			// como es un campo obligatorio que devuelva NULL significa que no ha sido migrada la tabla aun
+			/*
+			$table_name   = $table_obj->cFindNameBySPK( $values_array['AD_TABLE_ID'] );
+			$table_values_array = $table_obj->cFindByExpression( $table_name );
+	
+			$table_obj->cMigrate( $table_values_array, $last_id_child, $save_changes );
+			$values_array['AD_TABLE_ID'] = $last_id_child;
+			*/
+		}
+		
 		// actualizar al id de la validacion dinamica del destino
 		$win_obj = new AdWindow();
 		$win_obj->load();

@@ -82,7 +82,7 @@ class AdReference extends DataHandler
 		$tarray = listarTiposDeTabla( $connection, self::TABLENAME );
 
 		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		echo " <br> $query <br> ";
+		//echo " <br> $query <br> ";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -367,6 +367,7 @@ class AdReference extends DataHandler
 		$refv_list    = $this->cGet_Value( $id_old ); // TODO: Actualizar el nombre de la función.
 		foreach ($refv_list as $referencev_name) 
 		{ 
+			echo "<br>** migrando referencia $referencev_name.... **<br>";
 			// verificar si el reference esta en el origen, en cuyo caso se migra.
 			$refv_exists = $this->cCountByExpression( $referencev_name ); 
 			echo " hay $refv_exists <br/>";

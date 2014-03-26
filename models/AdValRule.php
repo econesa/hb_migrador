@@ -41,7 +41,7 @@ class AdValRule extends DataHandler
 		}
 
 		$query  = " SELECT * FROM {$this->tablename} t WHERE $this->expression LIKE '$value' ";
-		echo "<br> $query <br/>";
+		//echo "<br> $query <br/>";
 
 		$tarray = listarTiposDeTabla( $connection, self::TABLENAME );
 		//print_r($value);

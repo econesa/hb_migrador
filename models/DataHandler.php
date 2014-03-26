@@ -193,22 +193,30 @@ abstract class DataHandler
 	public function cFindNameBySPK( $pk_id )
 	{
 		$value = '';
-		
+
 		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
 
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 		
 		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
 				    WHERE  {$this->tablename}_ID = $pk_id ";
-		//echo "<br> $query <br>";
+		echo "<br>*** $query ***<br>";
 		
 		$stmt  = oci_parse( $connection, $query );
-		oci_execute( $stmt );
-		
-		if ( ($result = oci_fetch_row($stmt)) != false ) 
+		if ( oci_execute( $stmt ) )
 		{
-			$value = $result[0];
+			if ( ($result = oci_fetch_row($stmt)) != false ) 
+			{
+				$value = $result[0];
+				echo "<br>cFindNameBySPK: valor = $value<br>";
+			}
 		}
+		else
+		{
+			$e = oci_error( $stmt ); 
+	        echo $e['message']; 
+		}	
+		
 		oci_close($connection);
 
 		return $value;
@@ -225,7 +233,7 @@ abstract class DataHandler
 		
 		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
 				    WHERE  {$this->tablename}_ID = $pk_id ";
-		//echo "<br> $query <br>";
+		echo "<br> $query <br>";
 		
 		$stmt  = oci_parse( $connection, $query );
 		oci_execute( $stmt );
@@ -235,6 +243,7 @@ abstract class DataHandler
 			$value = $result[0];
 		}
 		oci_close($connection);
+		echo $value;
 
 		return $value;
 	}
@@ -248,7 +257,7 @@ abstract class DataHandler
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 
 		$query  = " SELECT {$this->tablename}_ID FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		//echo "<br/> $query <br/>";
+		echo "<br/> $query <br/>";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -278,10 +287,11 @@ abstract class DataHandler
 			$dpk_id = $this->cFindPkByExpression( $name );
 			if ( $dpk_id != -1 )
 				 $valor = $dpk_id;
-			echo "<br/> $name: $dpk_id <br/>";
+			echo "<br/> $name: $spk_id ==> $dpk_id <br/>";
 		}
 		else
 		{
+			echo "<br/> No se encontro por nombre <br/>";
 			$valor = 'NULL';
 		}
 		return $valor;

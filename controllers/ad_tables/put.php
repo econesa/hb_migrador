@@ -26,17 +26,30 @@ $last_id_col   = $col_obj->cLastID() + 1;
 
 foreach ($data as $item)
 {
+	echo "<br>** migrando tabla $item.... **<br>";
+
 	$values_array = $table_obj->cFindByExpression( $item[ 'UPPER(TABLENAME)' ] );
 	
+	$elem_obj  = new AdElement();
+	$elem_obj->cMigrateByParentId( $values_array['AD_TABLE_ID'], $save_changes );
+
+	$ref_obj  = new AdReference(); 
+	$ref_obj->cMigrateByParentId( $values_array['AD_TABLE_ID'], $save_changes );
+
+	$valrule_obj  = new AdValRule(); 
+	$valrule_obj->cMigrateByParentId( $values_array['AD_TABLE_ID'], $save_changes );
+
 	// se busca el id original de la tabla para buscar las columnas	
 	$id_old = $values_array['AD_TABLE_ID'];
 
 	$table_obj->cMigrate( $values_array, $last_id_table, $save_changes );
 
-	$columns_array = $col_obj->cFindByParentID( $id_old );
-	foreach ($columns_array as $column)
+	$child_array = $col_obj->cFindByParentID( $id_old );
+	foreach ($child_array as $childname)
 	{
-		$col_obj->cMigrate( $column, $last_id_col, $id_old, $save_changes );
+		echo "<br>** migrando columna $childname.... **<br>";
+		$col_obj->cMigrate( $childname, $last_id_col, $id_old, $save_changes );
+		
 		$last_id_col++;
 	} // end foreach AD_Column
 
