@@ -1,4 +1,5 @@
 ﻿<?php 
+include_once '../../utils.php';
 include_once 'DataHandler.php';
 
 //session_start();
@@ -105,47 +106,30 @@ class AdElement extends DataHandler
 	
 	public function cPut( $values_array )
 	{
-		//$last_id_table = $this->cLastID() + 1;
+		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		$insert_q   = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
+		oci_close( $connection );
 
-		$username1  = $_SESSION['user_origen'];
-		$password1  = $_SESSION['user_opw'];
-		$connection = oci_connect( $username1, $password1, $_SESSION['ip_origen'] . '/XE' );
+		$c2 = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 		
-		$username2  = $_SESSION['user_destino'];
-		$password2  = $_SESSION['user_dpw'];
-		$c2 		= oci_connect( $username2, $password2, $_SESSION['ip_destino'] . '/XE' );
-		
-		$mip = explode( ".", $_SESSION['ip_destino'] );
-		$enlace_nombre = 'HBE_DESA_' . $mip[3]; //Database Link
-
-		$tablename = self::TABLENAME;	
-		//
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );
-		
-		// se prepara consulta de migracion con id nuevo
-		$values_array['AD_REFERENCE_ID'] = 'NULL'; 
-		$values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
-		$values_array['AD_VAL_RULE_ID'] = 'NULL'; 
-		//$values_array['AD_ELEMENT_ID']  = $last_id_table; // actualizo al ultimo id
 		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
 		echo "<br> $query <br/>";
 
-		$stmt4 = oci_parse( $c2, $query );
-		if ( oci_execute( $stmt4 ) )
+		$stmt = oci_parse( $c2, $query );
+		if ( oci_execute( $stmt ) )
 		{
 			echo "<br> insertado <br/>"; 
 		}
 		else
 		{
-			$e = oci_error($stmt4); 
+			$e = oci_error($stmt); 
 			echo $e['message'] . '<br/>'; 
 		}	
-
-		oci_close($connection);
+		
 		oci_close($c2);	
 	}
 
-	public function cMigrateByName( $name, $save_changes = true )
+	public function cMigrateByName( $name, $last_id_elem, $save_changes = true )
 	{
 		$elem_name = $name;	
 		echo "<br> migrando elemento $elem_name.... <br>";
@@ -162,6 +146,12 @@ class AdElement extends DataHandler
 				//$tmp_obj->cPut( $elem_values_array['AD_ELEMENT_ID'], $last_id_elem, $elem_values_array['COLUMNNAME'], self::TABLENAME );
 				$elem_values_array['AD_ELEMENT_ID'] = $last_id_elem;
 				// se guarda
+
+				// se prepara consulta de migracion con id nuevo
+				$elem_values_array['AD_REFERENCE_ID'] = 'NULL'; 
+				$elem_values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
+				$elem_values_array['AD_VAL_RULE_ID'] = 'NULL'; 
+
 				$this->cPut( $elem_values_array, $save_changes );
 				$last_id_elem++;
 			}
