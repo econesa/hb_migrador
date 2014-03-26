@@ -14,7 +14,7 @@ class AdColumn extends DataHandler
 	}
 
 	/**/
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename  = 'AD_TABLE';
@@ -97,28 +97,29 @@ class AdColumn extends DataHandler
 
 		return $values_array;
 	}
-	
-	public function cPut( $values_array, $save_changes = true )
-	{
-		$username   = $_SESSION['user_destino'];
-		$password   = $_SESSION['user_dpw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, $this->tablename );		
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br>$query<br>";
 
-		$stmt = oci_parse( $connection, $query );
-		if ( $save_changes && oci_execute( $stmt ) )
-		{
-			echo "<br>insertado<br>";
+	/**/
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
+	{
+		$col_name = $name;
+		$last_id_col = $last_id;
+
+		// verificar si el reference esta en el origen, en cuyo caso se migra.
+		$exists = $this->cCountByExpression( $col_name ); 
+		if ($exists == 0) 
+		{ 
+			$values_array = $this->cFindByExpression( $col_name );
+
+			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
+			{
+				echo " elemento extendido <br/>";
+				$values_array[ $this->tablename . '_ID' ] = $last_id_col;
+				$this->cPut( $values_array, $save_changes );
+				$last_id_col++;
+			}
 		}
-		else{ 
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		}
-		oci_close( $connection );
-	}
+
+	} // end cMigrateByName
 
 	/* Migra una columna dado su nombre, el id de la tabla y el id que debe tener.
 	**/

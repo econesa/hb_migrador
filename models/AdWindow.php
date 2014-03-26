@@ -66,25 +66,6 @@ class AdWindow extends DataHandler
 		return $values_array;
 	} // end cFindByExpression
 
-	public function cPut( $values_array )
-	{
-		$username   = $_SESSION['user_destino'];
-		$password   = $_SESSION['user_dpw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
-		$query    = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br> $query <br>";
-
-		$stmt = oci_parse( $connection, $query );
-		if (!oci_execute( $stmt ))
-		{
-			$e = oci_error($stmt); 
-			echo $e['message']; 
-		}
-		oci_close( $connection );
-	} // end cPut
-
 	/* Migra una ventana dado su nombre y el id que debe tener.
 	**/
 	public function cMigrate( $values_array, $table_id, $save_changes = true )

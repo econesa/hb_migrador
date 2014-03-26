@@ -103,31 +103,6 @@ class AdElement extends DataHandler
 		
 		return $values_array;
 	}
-	
-	public function cPut( $values_array )
-	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		$insert_q   = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
-		oci_close( $connection );
-
-		$c2 = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-		
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br> $query <br/>";
-
-		$stmt = oci_parse( $c2, $query );
-		if ( oci_execute( $stmt ) )
-		{
-			echo "<br> insertado <br/>"; 
-		}
-		else
-		{
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		}	
-		
-		oci_close($c2);	
-	}
 
 	public function cMigrateByName( $name, $last_id_elem, $save_changes = true )
 	{

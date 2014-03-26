@@ -79,19 +79,37 @@ class AdValRule extends DataHandler
 	}
 
 	/**/
-	public function cPut( $values_array )
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
-		$username   = $_SESSION['user_destino'];
-		$password   = $_SESSION['user_dpw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );		
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br> $query <br>";
-		$stmt = oci_parse( $connection, $query );
-		oci_execute( $stmt );		
-		oci_close( $connection );
-	}
+		$referencev_name = $name;
+		$last_id_refv = $last_id;
+
+		// verificar si el reference esta en el origen, en cuyo caso se migra.
+		$refv_exists = $this->cCountByExpression( $referencev_name ); 
+		//echo " $refv_exists <br/>";
+		if ($refv_exists == 0) 
+		{ 
+			$refv_values_array = $this->cFindByExpression( $referencev_name );
+			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
+			{
+				echo " elemento extendido <br/>";
+				$refv_values_array['AD_VAL_RULE_ID'] = $last_id_refv;
+				$this->cPut( $refv_values_array, $save_changes );
+				$last_id_refv++;
+			}
+		}
+		else
+		{
+			/*$refv_values_array  = $this->cFindByExpression( $referencev_name, false );
+			$refvo_values_array = $this->cFindByExpression( $referencev_name );
+			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
+			{
+				echo " elemento extendido <br/> ";
+				//$tmp_obj->cPut( $refvo_values_array['AD_VAL_RULE_ID'], $refv_values_array['AD_VAL_RULE_ID'], $refv_values_array['NAME'], $this->tablename );
+			}*/
+		}		
+
+	} // end cMigrateByName
 
 	/**/
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
@@ -103,31 +121,7 @@ class AdValRule extends DataHandler
 		$lista    = $this->cFindAllByParentId( $id_old ); 
 		foreach ($lista as $referencev_name) 
 		{ 
-			// verificar si el reference esta en el origen, en cuyo caso se migra.
-			$refv_exists = $this->cCountByExpression( $referencev_name ); 
-			echo " $refv_exists <br/>";
-			if ($refv_exists == 0) 
-			{ 
-				$refv_values_array = $this->cFindByExpression( $referencev_name );
-				if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
-				{
-					echo " elemento extendido <br/>";
-					$tmp_obj->cPut( $refv_values_array['AD_VAL_RULE_ID'], $last_id_refv, $refv_values_array['NAME'], self::TABLENAME );
-					$refv_values_array['AD_VAL_RULE_ID'] = $last_id_refv;
-					$this->cPut( $refv_values_array, $save_changes );
-					$last_id_refv++;
-				}
-			}
-			else
-			{
-				$refv_values_array = $this->cFindByExpression( $referencev_name, false );
-				$refvo_values_array = $this->cFindByExpression( $referencev_name );
-				if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
-				{
-					echo " elemento extendido <br/>";
-					$tmp_obj->cPut( $refvo_values_array['AD_VAL_RULE_ID'], $refv_values_array['AD_VAL_RULE_ID'], $refv_values_array['NAME'], self::TABLENAME );
-				}
-			}
+			$this-> cMigrateByName( $referencev_name, $last_id_refv, $save_changes );
 		} 
 
 	} // end cMigrate

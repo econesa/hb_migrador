@@ -17,7 +17,7 @@ class AdTable extends DataHandler
 		return self::TABLENAME;
 	}
 	
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename = 'AD_TAB';
@@ -190,29 +190,11 @@ class AdTable extends DataHandler
 		return $values_array;
 	}
 
-	/* prepara y ejecuta insertar de una tabla */
-	public function cPut( $values_array, $save_changes )
+	/*  */
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
-		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, $this->tablename ); 
-		$query    = $insert_q . ' VALUES (' . implode(", ", $values_array) . ')'; 
-		echo "<br/> $query <br/>";
-
-		$stmt = oci_parse( $connection, $query );
-		if ( $save_changes && !oci_execute( $stmt ) )
-		{ 
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		} 
-		oci_close( $connection );
-	}
-
-	/* Migra una tabla dado su nombre y el id que debe tener.
-	**/
-	public function cMigrate( $values_array, $table_id, $save_changes = true )
-	{
-		$this->load();
+		$entity_name = $name;
+		$last_id_table = $last_id;
 
 		/*
 		$seq_obj   = new AdSequence(); // TODO: verificar si la secuencia ya existe
@@ -221,23 +203,31 @@ class AdTable extends DataHandler
 		$seq_obj->cPut( $seq_array, $save_changes );
 		*/
 
-		//$values_array['AD_CLIENT_ID'] = 0; // AD_Client_ID
-		//$values_array['AD_ORG_ID']    = 0; // AD_Org_ID
-		$values_array['AD_TABLE_ID']   =  $table_id;
-		$values_array['AD_WINDOW_ID']  = 'NULL'; // Ignorar AD_Window_ID
-		$values_array['DATECOLUMN_ID'] = 'NULL';
-		$values_array['BASE_TABLE_ID'] = 'NULL';
-		$values_array['REFERENCED_TABLE_ID'] = 'NULL';
+		// verificar si el reference esta en el origen, en cuyo caso se migra.
+		$exists = $this->cCountByExpression( $entity_name ); 
+		if ($exists == 0) 
+		{ 
+			$values_array = $this->cFindByExpression( $entity_name );
 
-		if ($values_array['AD_VAL_RULE_ID'] == 0) 
-			$values_array['AD_VAL_RULE_ID'] = 'NULL';
+			$values_array['AD_WINDOW_ID']  = 'NULL'; // Ignorar AD_Window_ID
 
-		if ($values_array['PO_WINDOW_ID'] == 0) 
-			$values_array['PO_WINDOW_ID'] = 'NULL';
+			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
+			{
+				echo " elemento extendido <br/>";
+				echo '<br/> se coloca val_rule en NULL <br/>';
+				$values_array['AD_VAL_RULE_ID'] = 'NULL';
+				$values_array['PO_WINDOW_ID'] = 'NULL';
+				$values_array['DATECOLUMN_ID'] = 'NULL';
+				$values_array['BASE_TABLE_ID'] = 'NULL';
+				$values_array['REFERENCED_TABLE_ID'] = 'NULL';
 
-		// se prepara consulta de migracion con id nuevo
-		$this->cPut( $values_array, $save_changes );	// TODO: verificar si la tabla ya existe (caso migrar por ventana)	
-	}
+				$values_array[ $this->tablename . '_ID' ] = $last_id_table;
+				$this->cPut( $values_array, $save_changes );
+				$last_id_table++;
+			}
+		}
+
+	} // end cMigrateByName
 
 } // end class
 ?>

@@ -95,33 +95,6 @@ class AdTab extends DataHandler
 		return $values_array;
 	}
 	
-	public function cPut( $values_array, $save_changes = true )
-	{
-		$username   = $_SESSION['user_destino'];
-		$password   = $_SESSION['user_dpw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );		
-		$query = $insert_q . ' VALUES (' . implode(", ", $values_array) . ')';
-		echo "<br> $query <br>";
-		
-		$stmt = oci_parse( $connection, $query );
-		
-		if ( $save_changes )
-		{
-			if ( oci_execute( $stmt ) )
-			{
-				echo '<br> insertado <br>';
-			}
-			else{ 
-				$e = oci_error($stmt); 
-				echo $e['message'] . '<br/>'; 
-			}	
-		}
-		
-		oci_close( $connection );
-	}
-
 	/* Migra una ventana dado su nombre y el id que debe tener.
 	**/
 	public function cMigrate( $values_array, $table_id, $parent_id, $save_changes = true )

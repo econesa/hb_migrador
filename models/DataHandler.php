@@ -21,7 +21,7 @@ abstract class DataHandler
 	protected $connection;
 
 	/**/
-	public function load() 
+	protected function load() 
 	{
 	   $this->username_d  = $_SESSION['user_destino'];
 	   $this->password_d  = $_SESSION['user_dpw'];
@@ -297,6 +297,30 @@ abstract class DataHandler
 		return $valor;
 	}
 
+	/* prepara el insert de una entidad y lo ejecuta */
+	public function cPut( $values_array, $save_changes = true  )
+	{		
+		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+		$insert_q   = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
+
+		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
+		echo "<br> $query <br/>";
+
+		$stmt = oci_parse( $connection, $query );
+
+		if ( $save_changes )
+			if ( oci_execute( $stmt ) )
+			{
+				echo "<br> insertado <br/>"; 
+			}
+			else
+			{
+				$e = oci_error( $stmt ); 
+				echo $e['message'] . '<br/>'; 
+			}	
+		
+		oci_close( $connection );	
+	}
 
 	/* Calcula la diferencia que hay entre dos entidades y retorna el resultado en formato json */
 	function diferenciar( $page, $rows, $offset )

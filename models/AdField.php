@@ -86,25 +86,7 @@ class AdField extends DataHandler
 
 		return $values_array;
 	}
-	
-	public function cPut( $values_array, $save_changes = true )
-	{
-		$username   = $_SESSION['user_destino'];
-		$password   = $_SESSION['user_dpw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );		
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo $query. '<br><br>';
-		$stmt = oci_parse( $connection, $query );
-		if ( $save_changes && oci_execute( $stmt ) )
-		{}
-		else{ 
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		}
-		oci_close( $connection );
-	}
 
 } // end class
+
 ?>

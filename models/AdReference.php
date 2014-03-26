@@ -1,4 +1,5 @@
 ﻿<?php 
+include_once '../../utils.php';
 include_once 'DataHandler.php';
 
 //session_start();
@@ -14,7 +15,7 @@ class AdReference extends DataHandler
 		return $this->tablename;
 	}
 
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename  = 'AD_COLUMN';
@@ -114,100 +115,6 @@ class AdReference extends DataHandler
 		oci_close($connection);
 		
 		return $values_array;
-	}
-	
-	/*
-	public function cPut( $values_array, $save_changes = true )
-	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, $this->tablename );	
-		
-		oci_close($connection);	
-		
-		$c2    = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-
-		$query  = " INSERT into {$this->tablename} (AD_CLIENT_ID, AD_ORG_ID, AD_REFERENCE_ID, AD_TABLE_ID, COLUMN_DISPLAY_ID, COLUMN_KEY_ID,
-					CREATED, CREATEDBY, ENTITYTYPE, ISACTIVE, ISDISPLAYIDENTIFIERS, ISVALUEDISPLAYED, ORDERBYCLAUSE, UPDATED, UPDATEDBY, 
-					WHERECLAUSE, ISAPPROVED, DATEPROCESSED, SYNCHRONIZEDEFAULTS, SYSTEMSTATUS, AD_USER_ID) 
-					VALUES  
-					( :client_id, :org_id, :reference_id, :table_id, :column_display_id, :column_key_id, '{$values_array['CREATED']}', :createdby, ':ventitytype', 
-					  '{$values_array['ISACTIVE']}',      '{$values_array['ISDISPLAYIDENTIFIERS']}', '{$values_array['ISVALUEDISPLAYED']}', 
-					  '{$values_array['ORDERBYCLAUSE']}', '{$values_array['UPDATED']}', :updatedby,  '{$values_array['WHERECLAUSE']}', 
-					  '{$values_array['ISAPPROVED']}', 	  '{$values_array['DATEPROCESSED']}',        '{$values_array['SYNCHRONIZEDEFAULTS']}', 
-					  '{$values_array['SYSTEMSTATUS']}', :ad_user_id )";
-		echo "<br> $query <br/>";
-		
-		$stmt = oci_parse( $c2, $query );
-
-		oci_bind_by_name( $stmt, ':client_id', 	$values_array['AD_CLIENT_ID']);
-		oci_bind_by_name( $stmt, ':org_id', 	$values_array['AD_ORG_ID']);
-		oci_bind_by_name( $stmt, ':reference_id', $values_array['AD_REFERENCE_ID']);
-		oci_bind_by_name( $stmt, ':table_id', 	$values_array['AD_TABLE_ID']);
-		oci_bind_by_name( $stmt, ':column_display_id', $values_array['COLUMN_DISPLAY_ID']);
-		oci_bind_by_name( $stmt, ':column_key_id', $values_array['COLUMN_KEY_ID']);
-		//oci_bind_by_name( $stmt, ':dcreated', 	$values_array['CREATED']);
-		oci_bind_by_name( $stmt, ':createdby', 	$values_array['CREATEDBY']);
-		oci_bind_by_name( $stmt, ':ventitytype', $values_array['ENTITYTYPE']);
-		//oci_bind_by_name( $stmt, ':visactive',	 $values_array['ISACTIVE']);
-		//oci_bind_by_name( $stmt, ':isdisplayidentifiers', $values_array['ISDISPLAYIDENTIFIERS']);
-		//oci_bind_by_name( $stmt, ':isvaluedisplayed', $values_array['ISVALUEDISPLAYED']);
-		//oci_bind_by_name( $stmt, ':orderbyclause',	 $values_array['ORDERBYCLAUSE']);
-		//oci_bind_by_name( $stmt, ':updated', 	$values_array['UPDATED']);
-		oci_bind_by_name( $stmt, ':updatedby', 	$values_array['UPDATEDBY']);
-		//oci_bind_by_name( $stmt, ':whereclause', $values_array['WHERECLAUSE']);
-		//oci_bind_by_name( $stmt, ':isapproved', 	$values_array['ISAPPROVED']);
-		//oci_bind_by_name( $stmt, ':dateprocessed', 	$values_array['DATEPROCESSED']);
-		//oci_bind_by_name( $stmt, ':synchronizedefaults', $values_array['SYNCHRONIZEDEFAULTS']);
-		//oci_bind_by_name( $stmt, ':systemstatus', 	$values_array['SYSTEMSTATUS']);
-		oci_bind_by_name( $stmt, ':ad_user_id', 	$values_array['AD_USER_ID']);
-
-		if ( $save_changes )
-		{
-			if ( oci_execute( $stmt ) )
-			{
-			}
-			else
-			{
-				$e = oci_error($stmt); 
-				echo $e['message'] . '<br/>'; 
-			}	
-		}
-
-		oci_close($c2);		
-	}
-	*/
-
-	/**/
-	public function cPut( $values_array )
-	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		
-		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );
-
-		oci_close($connection);
-
-		$c2 = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-
-		$tablename = self::TABLENAME;	
-		//
-				
-		// se prepara consulta de migracion con id nuevo
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br> $query <br/>";
-
-		$stmt = oci_parse( $c2, $query );
-		if ( oci_execute( $stmt ) )
-		{
-			echo "<br> insertado <br/>"; 
-		}
-		else
-		{
-			$e = oci_error( $stmt ); 
-			echo $e['message'] . '<br/>'; 
-		}	
-		
-		oci_close($c2);	
 	}
 
 	/* busca los datos de la hija de la referencia dado el parent_id y la clase de la hija*/
@@ -310,6 +217,67 @@ class AdReference extends DataHandler
 		oci_close($c2);
 	}
 
+	/**/
+	public function cMigrateByName( $name, $last_id_ref, $save_changes = true )
+	{
+		$ref_name = $name;	
+		echo "<br> migrando referencia $ref_name.... <br>";
+		$ref_exists = $this->cCountByExpression( $ref_name ); 
+		
+		if ($ref_exists == 0) 
+		{
+			// se buscan los datos completos de la fila
+			$ref_values_array = $this->cFindByExpression( $ref_name );
+			if ( $ref_values_array['AD_REFERENCE_ID'] >= 5000000 )
+			{
+				echo " referencia extendida <br/>";
+				// se guarda ids en tabla temporal
+				//$tmp_obj->cPut( $ref_values_array['AD_ELEMENT_ID'], $last_id_elem, $ref_values_array['COLUMNNAME'], self::TABLENAME );
+				$old_ref_id = $ref_values_array['AD_REFERENCE_ID'];
+				$ref_values_array['AD_REFERENCE_ID'] = $last_id_ref;
+				// se guarda
+
+				$this->cPut( $ref_values_array, $save_changes );
+			
+				//echo ( $ref_values_array['VALIDATIONTYPE'] );
+				//Esto se refiere al migrar, en caso de la referencia tenga una validacion distinta al datatype se migra el elemento.
+				
+				switch ($ref_values_array['VALIDATIONTYPE']) 
+				{
+					case "'L'":
+						$this->migrateChildTable($old_ref_id, $ref_values_array['AD_REFERENCE_ID'], 'AD_REF_LIST');
+						break;
+
+					case "'T'":
+						$this->migrateChildTable($old_ref_id, $ref_values_array['AD_REFERENCE_ID'], 'AD_REF_TABLE');
+						break;
+
+					case "'D'":
+					default:	
+						break;
+				}			
+				
+				$last_id_ref++;
+			}
+			else
+			{
+				echo "<br/> La referencia ya esta en compiere original. <br/>";
+			}
+		}
+		else
+		{
+			$ref_values_array = $this->cFindByExpression( $ref_name, false );
+			$refo_values_array = $this->cFindByExpression( $ref_name );
+			if ( $ref_values_array['AD_ELEMENT_ID'] >= 5000000 )
+			{
+				echo " referencia extendida <br/>";
+				$tmp_obj->cPut( $refo_values_array['AD_REFERENCE_ID'], $ref_values_array['AD_REFERENCE_ID'], $ref_values_array['NAME'], self::TABLENAME );
+			}
+		}
+		
+	} // end cMigrate
+
+/*
 	public function cMigrate( $values_array, $new_ref_id, $save_changes = true )
 	{
 		$id_old = $values_array['AD_REFERENCE_ID'];
@@ -354,7 +322,7 @@ class AdReference extends DataHandler
 		}		 
 
 	} // end cMigrate
-
+*/
 
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
