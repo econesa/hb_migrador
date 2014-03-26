@@ -78,7 +78,7 @@ class AdTable extends DataHandler
 				   JOIN   {$this->parent_tablename} parent ON (parent.{$this->tablename}_ID = t.{$this->tablename}_ID) 
 				   WHERE  parent.{$this->parent_tablename}_ID = $parent_id ";
 		
-		echo "<br> $query <br/>";
+		//echo "<br> $query <br/>";
 		
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) ) 

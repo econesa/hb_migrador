@@ -36,7 +36,7 @@ class AdWindow extends DataHandler
 		
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 		$query = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		echo "<br><br> $query <br>";
+		//echo "<br> $query <br>";
 
 		$stmt  = oci_parse( $connection, $query );
 				
@@ -89,12 +89,12 @@ class AdWindow extends DataHandler
 	**/
 	public function cMigrate( $values_array, $table_id, $save_changes = true )
 	{
-		$tmp_obj = new TAdMig( $save_changes );
-		$tmp_obj->truncate();
+		//$tmp_obj = new TAdMig( $save_changes );
+		//$tmp_obj->truncate();
 		
 		$this->load();
 
-		$id_old    = $values_array['AD_WINDOW_ID'];
+		//$id_old    = $values_array['AD_WINDOW_ID'];
 
 		echo "<br>** migrando ventana {$values_array['NAME']}.... **<br>";
 /*
@@ -103,7 +103,7 @@ class AdWindow extends DataHandler
 		$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
 		$seq_obj->cPut( $seq_array, $save_changes );
 */
-		$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
+		//$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
 
 		// se prepara consulta de migracion con id nuevo
 		$values_array['AD_CLIENT_ID'] = $values_array['AD_ORG_ID'] = 0;
@@ -112,7 +112,10 @@ class AdWindow extends DataHandler
 		//echo '<br/>'; print_r( $values_array ); echo '<br/>';
 
 		$this->cPut( $values_array, $save_changes );	
-		//$this->cPut( $this->prepareValues($values_array));		
+		//$this->cPut( $this->prepareValues($values_array));	
+
+
+
 	}
 
 } // end class

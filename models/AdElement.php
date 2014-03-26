@@ -66,7 +66,7 @@ class AdElement extends DataHandler
 		}
 
 		$query  = " SELECT * FROM $tablename t WHERE $this->expression LIKE '$value' ";
-		echo "<br> $query <br/>";
+		//echo "<br> $query <br/>";
 
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 		
@@ -145,6 +145,44 @@ class AdElement extends DataHandler
 		oci_close($c2);	
 	}
 
+	public function cMigrateByName( $name, $save_changes = true )
+	{
+		$elem_name = $name;	
+		echo "<br> migrando elemento $elem_name.... <br>";
+		$elem_exists = $this->cCountByExpression( $elem_name ); 
+		
+		if ($elem_exists == 0) 
+		{
+			// se buscan los datos completos de la fila
+			$elem_values_array = $this->cFindByExpression( $elem_name );
+			if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
+			{
+				echo " elemento extendido <br/>";
+				// se guarda ids en tabla temporal
+				//$tmp_obj->cPut( $elem_values_array['AD_ELEMENT_ID'], $last_id_elem, $elem_values_array['COLUMNNAME'], self::TABLENAME );
+				$elem_values_array['AD_ELEMENT_ID'] = $last_id_elem;
+				// se guarda
+				$this->cPut( $elem_values_array, $save_changes );
+				$last_id_elem++;
+			}
+			else
+			{
+				echo "<br/> El elemento ya esta en compiere base. <br/>";
+			}
+		}
+		else
+		{
+			$elem_values_array = $this->cFindByExpression( $elem_name, false );
+			$elemo_values_array = $this->cFindByExpression( $elem_name );
+			if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
+			{
+				echo " elemento extendido <br/>";
+				$tmp_obj->cPut( $elemo_values_array['AD_ELEMENT_ID'], $elem_values_array['AD_ELEMENT_ID'], $elem_values_array['COLUMNNAME'], self::TABLENAME );
+			}
+		}
+		
+	} // end cMigrate
+
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
 		$id_old = $parent_id;
@@ -156,33 +194,7 @@ class AdElement extends DataHandler
 		$lista    = $this->cFindAllByParentId( $id_old );
 		foreach ($lista as $elem_name)
 		{
-			$elem_exists = $this->cCountByExpression( $elem_name ); 
-			// echo " $elem_exists <br/>";
-			if ($elem_exists == 0) 
-			{
-				// se buscan los datos completos de la fila
-				$elem_values_array = $this->cFindByExpression( $elem_name );
-				if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
-				{
-					echo " elemento extendido <br/>";
-					// se guarda ids en tabla temporal
-					$tmp_obj->cPut( $elem_values_array['AD_ELEMENT_ID'], $last_id_elem, $elem_values_array['COLUMNNAME'], self::TABLENAME );
-					$elem_values_array['AD_ELEMENT_ID'] = $last_id_elem;
-					// se guarda
-					$this->cPut( $elem_values_array, $save_changes );
-					$last_id_elem++;
-				}
-			}
-			else
-			{
-				$elem_values_array = $this->cFindByExpression( $elem_name, false );
-				$elemo_values_array = $this->cFindByExpression( $elem_name );
-				if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
-				{
-					echo " elemento extendido <br/>";
-					$tmp_obj->cPut( $elemo_values_array['AD_ELEMENT_ID'], $elem_values_array['AD_ELEMENT_ID'], $elem_values_array['COLUMNNAME'], self::TABLENAME );
-				}
-			}
+			$this->cMigrateByName( $elem_name, $save_changes ); 			
 		}	
 	} // end cMigrate
 

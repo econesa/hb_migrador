@@ -268,6 +268,26 @@ abstract class DataHandler
 		return $rs_id;
 	}
 
+	/* Dado el id de la tabla del origen, se busca la del destino */
+	public function cFindDPKBySPK( $spk_id )
+	{
+		$valor  = -1;
+		$name   = $this->cFindNameBySPK( $spk_id );
+		if ( !empty($table_name) )
+        {
+			$dpk_id = $this->cFindPkByExpression( $name );
+			if ( $dpk_id != -1 )
+				 $valor = $dpk_id;
+			echo "<br/> $name: $dpk_id <br/>";
+		}
+		else
+		{
+			$valor = 'NULL';
+		}
+		return $valor;
+	}
+
+
 	/* Calcula la diferencia que hay entre dos entidades y retorna el resultado en formato json */
 	function diferenciar( $page, $rows, $offset )
 	{

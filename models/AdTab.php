@@ -37,7 +37,7 @@ class AdTab extends DataHandler
 			" SELECT {$this->expression} 		
 			  FROM   COMPIERE.{$this->tablename} t
 			  WHERE  {$this->parent_tablename}_ID = {$parent_id} ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -132,18 +132,17 @@ class AdTab extends DataHandler
 		$id_old    = $values_array['AD_TAB_ID']; // guardar el id original
 
 		//
-
-		echo '<br>** migrando tablas.... **<br>';
 		$table_obj  = new AdTable();
 		$table_obj->load();
 		$last_id_child = $table_obj->cLastID() + 1;
 		$table_values_array = $table_obj->cFindAllByParentId( $values_array['AD_TAB_ID'] );
 		foreach ($table_values_array as $childname)
 		{
+			echo "<br>** migrando tabla $childname.... **<br>";
 			$children_array = $table_obj->cFindByExpression( $childname );
 			$adtablename = strtoupper(substr( $children_array['TABLENAME'], 1, -1 ));
 			$tbl_count = $table_obj->cCountByExpression( $adtablename );
-			echo "count(*) = $tbl_count <br/>";
+			echo "count(*) = $tbl_count => No se encuentra en el destino <br/>";
 			if ( $tbl_count == 0)
 			{
 				$table_obj->cMigrate( $children_array, $last_id_child, $save_changes );
@@ -151,7 +150,7 @@ class AdTab extends DataHandler
 			}
 			else
 			{
-				$tmp_obj->cPut( $children_array['AD_TABLE_ID'], $table_obj->cGetIdByExpression( $childname ), "'$adtablename'", 'AD_TABLE' );
+				$tmp_obj->cPut( $children_array['AD_TABLE_ID'], $table_obj->cFindByExpression( $childname ), "'$adtablename'", 'AD_TABLE' );
 			}
 
 		} // end foreach
@@ -167,8 +166,23 @@ class AdTab extends DataHandler
 		$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
 
 		$values_array['AD_TAB_ID']    = $table_id;
-		$values_array['AD_TABLE_ID']  = $tmp_obj->cGetIDByOldID( 'AD_TABLE', $values_array['AD_TABLE_ID'] );
-		$values_array['AD_WINDOW_ID'] = $tmp_obj->cGetIDByOldID( 'AD_WINDOW', $values_array['AD_WINDOW_ID'] );
+
+		//verifica que el nombre de la tabla exista en el destino y buscar el valor del id.
+		$values_array['AD_TABLE_ID']  = $table_obj->cFindDPKBySPK( $values_array['AD_TABLE_ID'] );
+
+		// actualizar al id de la validacion dinamica del destino
+		$win_obj = new AdWindow();
+		$win_obj->load();
+		$win_name  = $win_obj->cFindNameBySPK( $values_array[$win_obj->getTablename() . '_ID'] );
+		if ( !empty($win_name) )
+		{
+			$new_win_id = $win_obj->cFindPkByExpression( $win_name );
+			if ( $new_win_id != -1 )
+				 $values_array[$win_obj->getTablename() . '_ID'] = $new_win_id;
+			echo "<br/> $win_name: $new_win_id <br/>";
+		}
+		else
+			 $values_array[$win_obj->getTablename() . '_ID'] = 'NULL';
 
 		// se prepara consulta de migracion con id nuevo
 		$values_array['AD_CLIENT_ID'] = $values_array['AD_ORG_ID'] = $values_array['TABLEVEL'] = 0;

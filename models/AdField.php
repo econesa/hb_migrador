@@ -87,7 +87,7 @@ class AdField extends DataHandler
 		return $values_array;
 	}
 	
-	public function cPut( $values_array )
+	public function cPut( $values_array, $save_changes = true )
 	{
 		$username   = $_SESSION['user_destino'];
 		$password   = $_SESSION['user_dpw'];
@@ -97,7 +97,7 @@ class AdField extends DataHandler
 		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
 		echo $query. '<br><br>';
 		$stmt = oci_parse( $connection, $query );
-		if ( oci_execute( $stmt ) )
+		if ( $save_changes && oci_execute( $stmt ) )
 		{}
 		else{ 
 			$e = oci_error($stmt); 
