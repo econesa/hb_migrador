@@ -164,7 +164,7 @@ class AdTable extends DataHandler
 		$query = " SELECT * FROM $this->tablename t
 				   JOIN  {$parentTableName} tmp ON ( tmp.{$this->tablename}_ID = t.{$this->tablename}_ID )
 				   WHERE $this->expression LIKE '$value' AND {$parentTableName}_ID = $parentID ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 		
 		$stmt  = oci_parse( $connection, $query );
 		oci_execute( $stmt );
@@ -190,11 +190,19 @@ class AdTable extends DataHandler
 		return $values_array;
 	}
 
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
 	/*  */
 	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
 		$entity_name = $name;
-		$last_id_table = $last_id;
+		$last_id_entity = $last_id;
+		$old_id = 0;
 
 		/*
 		$seq_obj   = new AdSequence(); // TODO: verificar si la secuencia ya existe
@@ -209,23 +217,37 @@ class AdTable extends DataHandler
 		{ 
 			$values_array = $this->cFindByExpression( $entity_name );
 
-			$values_array['AD_WINDOW_ID']  = 'NULL'; // Ignorar AD_Window_ID
+			$values_array['AD_WINDOW_ID'] = 'NULL'; // Ignorar AD_Window_ID
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
 				echo " elemento extendido <br/>";
 				echo '<br/> se coloca val_rule en NULL <br/>';
 				$values_array['AD_VAL_RULE_ID'] = 'NULL';
-				$values_array['PO_WINDOW_ID'] = 'NULL';
-				$values_array['DATECOLUMN_ID'] = 'NULL';
-				$values_array['BASE_TABLE_ID'] = 'NULL';
+				$values_array['PO_WINDOW_ID']   = 'NULL';
+				$values_array['DATECOLUMN_ID']  = 'NULL';
+				$values_array['BASE_TABLE_ID']  = 'NULL';
 				$values_array['REFERENCED_TABLE_ID'] = 'NULL';
 
-				$values_array[ $this->tablename . '_ID' ] = $last_id_table;
+				$old_id = $values_array[ $this->tablename . '_ID' ];
+				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				$this->cPut( $values_array, $save_changes );
-				$last_id_table++;
+			}
+			else
+			{
+				$values_array = $this->cFindByExpression( $name, false );
+				$last_id_entity = $values_array[ $this->tablename . '_ID' ];
+				echo "<br> La tabla ya esta en compiere original - $name con ID:$last_id_entity <br>";		
 			}
 		}
+		else
+		{
+			$values_array = $this->cFindByExpression( $entity_name, false );
+			$last_id_entity = $values_array[ $this->tablename . '_ID' ];
+			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
+		}	
+
+		return $last_id_entity;
 
 	} // end cMigrateByName
 

@@ -8,7 +8,6 @@ $data = json_decode( file_get_contents('php://input'), true );
 $save_changes = true;
 
 $elem_obj   = new AdElement();
-$elem_obj->load();
 
 $last_id = $elem_obj->cLastID() + 1;
 

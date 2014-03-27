@@ -9,7 +9,6 @@ $data = json_decode( file_get_contents('php://input'), true );
 $save_changes = true;
 
 $entity_obj   = new AdReference();
-$entity_obj->load();
 
 $last_id = $entity_obj->cLastID() + 1;
 

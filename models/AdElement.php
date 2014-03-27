@@ -8,7 +8,7 @@ class AdElement extends DataHandler
 {
 	const TABLENAME  =  'AD_ELEMENT';
 
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename = 'AD_TABLE';
@@ -104,59 +104,61 @@ class AdElement extends DataHandler
 		return $values_array;
 	}
 
-	public function cMigrateByName( $name, $last_id_elem, $save_changes = true )
+	public function cMigrateByPK( $pk_id, $save_changes = true )
 	{
-		$elem_name = $name;	
-		echo "<br> migrando elemento $elem_name.... <br>";
-		$elem_exists = $this->cCountByExpression( $elem_name ); 
+		$entity_name    = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
+	{
+		$entity_name = $name;
+		$last_id_entity = $last_id;
+
+		echo "<br> {$this->tablename} :: migrando referencia $entity_name.... <br>";
+
+		$exists = $this->cCountByExpression( $entity_name ); 
 		
-		if ($elem_exists == 0) 
+		if ($exists == 0) 
 		{
 			// se buscan los datos completos de la fila
-			$elem_values_array = $this->cFindByExpression( $elem_name );
-			if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
-			{
-				echo " elemento extendido <br/>";
-				// se guarda ids en tabla temporal
-				//$tmp_obj->cPut( $elem_values_array['AD_ELEMENT_ID'], $last_id_elem, $elem_values_array['COLUMNNAME'], self::TABLENAME );
-				$elem_values_array['AD_ELEMENT_ID'] = $last_id_elem;
-				// se guarda
-
+			$values_array = $this->cFindByExpression( $entity_name );
+			if ( $values_array['AD_ELEMENT_ID'] >= 5000000 )
+			{				
+				$values_array['AD_ELEMENT_ID'] = $last_id_entity;
+				echo " elemento extendido - $last_id_entity <br/>";
 				// se prepara consulta de migracion con id nuevo
-				$elem_values_array['AD_REFERENCE_ID'] = 'NULL'; 
-				$elem_values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
-				$elem_values_array['AD_VAL_RULE_ID'] = 'NULL'; 
+				$values_array['AD_REFERENCE_ID'] = 'NULL'; 
+				$values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
+				$values_array['AD_VAL_RULE_ID'] = 'NULL'; 
 
-				$this->cPut( $elem_values_array, $save_changes );
-				$last_id_elem++;
+				$this->cPut( $values_array, $save_changes );
 			}
 			else
 			{
-				echo "<br/> El elemento ya esta en compiere base. <br/>";
+				$values_array   = $this->cFindByExpression( $entity_name, false );
+				$last_id_entity = $values_array['AD_ELEMENT_ID'];
+				echo "<br> El elemento ya esta en compiere base - $entity_name con ID:$last_id_entity <br>";
 			}
 		}
 		else
-		{
-			$elem_values_array = $this->cFindByExpression( $elem_name, false );
-			$elemo_values_array = $this->cFindByExpression( $elem_name );
-			if ( $elem_values_array['AD_ELEMENT_ID'] >= 5000000 )
-			{
-				echo " elemento extendido <br/>";
-				$tmp_obj->cPut( $elemo_values_array['AD_ELEMENT_ID'], $elem_values_array['AD_ELEMENT_ID'], $elem_values_array['COLUMNNAME'], self::TABLENAME );
-			}
-		}
-		
+		{			
+			$values_array = $this->cFindByExpression( $entity_name, false );
+			$last_id_entity = $values_array['AD_ELEMENT_ID'];
+			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
+		}	
+		return $last_id_entity;
+
 	} // end cMigrate
 
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
-		$id_old = $parent_id;
+		$id_old  = $parent_id;
 		$tmp_obj = new TAdMig( $save_changes );
 
-		$this->load();
-
 		$last_id_elem = $this->cLastID() + 1;
-		$lista    = $this->cFindAllByParentId( $id_old );
+		$lista  = $this->cFindAllByParentId( $id_old );
 		foreach ($lista as $elem_name)
 		{
 			$this->cMigrateByName( $elem_name, $save_changes ); 			

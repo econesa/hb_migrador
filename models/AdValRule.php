@@ -1,6 +1,7 @@
 <?php 
 include_once 'DataHandler.php';
 
+
 class AdValRule extends DataHandler
 {
 	const TABLENAME  = 'AD_VAL_RULE';
@@ -9,7 +10,7 @@ class AdValRule extends DataHandler
 	/**/
 	public function getTablename( )
 	{
-		return self::TABLENAME;
+		return $this->tablename;
 	}
 
 	public function __construct()
@@ -78,6 +79,15 @@ class AdValRule extends DataHandler
 		return $values_array;
 	}
 
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cLastID() + 1;
+		echo "<br> {$this->tablename} :: migrando val rule $entity_name.... <br>";
+		$last_id_entity = $this->cMigrateByName( $entity_name, $last_id_entity, $save_changes );	
+		return $last_id_entity;		
+	} // end cMigrateByPK
+
 	/**/
 	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
@@ -85,40 +95,33 @@ class AdValRule extends DataHandler
 		$last_id_refv = $last_id;
 
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
-		$refv_exists = $this->cCountByExpression( $referencev_name ); 
-		//echo " $refv_exists <br/>";
-		if ($refv_exists == 0) 
+		$exists = $this->cCountByExpression( $referencev_name ); 
+		if ( $exists == 0 ) 
 		{ 
 			$refv_values_array = $this->cFindByExpression( $referencev_name );
 			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
 			{
-				echo " elemento extendido <br/>";
+				//echo " elemento extendido <br/>";
 				$refv_values_array['AD_VAL_RULE_ID'] = $last_id_refv;
 				$this->cPut( $refv_values_array, $save_changes );
 				$last_id_refv++;
 			}
 		}
 		else
-		{
-			/*$refv_values_array  = $this->cFindByExpression( $referencev_name, false );
-			$refvo_values_array = $this->cFindByExpression( $referencev_name );
-			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
-			{
-				echo " elemento extendido <br/> ";
-				//$tmp_obj->cPut( $refvo_values_array['AD_VAL_RULE_ID'], $refv_values_array['AD_VAL_RULE_ID'], $refv_values_array['NAME'], $this->tablename );
-			}*/
-		}		
+		{			
+			$values_array = $this->cFindByExpression( $referencev_name, false );
+			$last_id_refv = $values_array['AD_VAL_RULE_ID'];
+			echo "<br> existe $referencev_name con ID:$last_id_refv <br>";
+		}
+		return $last_id_refv;
 
 	} // end cMigrateByName
 
 	/**/
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
-		$id_old = $parent_id;
-		$tmp_obj = new TAdMig( $save_changes );
-
 		$last_id_refv = $this->cLastID() + 1; 
-		$lista    = $this->cFindAllByParentId( $id_old ); 
+		$lista    = $this->cFindAllByParentId( $parent_id ); 
 		foreach ($lista as $referencev_name) 
 		{ 
 			$this-> cMigrateByName( $referencev_name, $last_id_refv, $save_changes );

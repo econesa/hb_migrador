@@ -22,6 +22,37 @@ class AdColumn extends DataHandler
 		$this->expression = 'UPPER(T.COLUMNNAME)';
 	}
 
+	/**/
+	public function cCount( $value, $parent_id )
+	{
+		if ( $this->connection != null )
+			oci_close( $this->connection );
+
+		$this->connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+		
+		$rs_count = -1;
+		$tarray = listarTiposDeTabla( $this->connection, $this->tablename );
+
+		$query  = " SELECT COUNT(*) FROM $this->tablename t WHERE $this->expression LIKE '$value' AND {$this->parent_tablename}_ID = $parent_id ";
+		//echo " <br> $query <br> ";
+
+		$stmt = oci_parse( $this->connection, $query );
+		if ( oci_execute( $stmt ) )
+		{
+			$rs_count = oci_fetch_assoc( $stmt );
+			$rs_count = $rs_count['COUNT(*)'];
+		}
+		else
+		{
+			$e = oci_error( $stmt ); 
+	        echo $e['message']; 
+		}
+		
+		oci_close( $this->connection );
+		
+		return $rs_count;
+	}
+
 	public function cFindByParentID( $parent_id )
 	{
 		$result = array();
@@ -98,27 +129,53 @@ class AdColumn extends DataHandler
 		return $values_array;
 	}
 
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
 	/**/
-	public function cMigrateByName( $name, $last_id, $save_changes = true )
+	public function cMigrateByName( $name, $parent_id, $last_id, $last_id_table, $save_changes = true )
 	{
 		$col_name = $name;
 		$last_id_col = $last_id;
 
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
-		$exists = $this->cCountByExpression( $col_name ); 
-		if ($exists == 0) 
+		$exists = $this->cCount( $col_name, $parent_id ); 
+		if ( $exists == 0 ) 
 		{ 
-			$values_array = $this->cFindByExpression( $col_name );
+			echo "<br> migrando columna $col_name.... <br>";
+			$values_array = $this->cFindByExpression( $col_name, $parent_id );
+			
+			$values_array['AD_PROCESS_ID'] = 'NULL';
+
+			$elem_obj  = new AdElement();
+			$values_array['AD_ELEMENT_ID'] = $elem_obj->cMigrateByPK( $values_array['AD_ELEMENT_ID'], $save_changes );
+			
+			$ref_obj   = new AdReference(); 
+			if ( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'] != 0 )
+				$values_array[$ref_obj->getTablename() . '_VALUE_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
+			else
+				$values_array[ $ref_obj->getTablename() . '_VALUE_ID'] = 'NULL';
+
+			$valrule_obj  = new AdValRule(); 
+			if ( $values_array[ $valrule_obj->getTablename() . '_ID'] != 0 )
+				$values_array[ $valrule_obj->getTablename() . '_ID'] = $valrule_obj->cMigrateByPK( $values_array['AD_VAL_RULE_ID'], $save_changes );
+			else
+				$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
+
+			$values_array[ 'AD_TABLE_ID' ] = $last_id_table;
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				echo " elemento extendido <br/>";
+				//echo " elemento extendido <br/>";
 				$values_array[ $this->tablename . '_ID' ] = $last_id_col;
 				$this->cPut( $values_array, $save_changes );
 				$last_id_col++;
 			}
 		}
-
 	} // end cMigrateByName
 
 	/* Migra una columna dado su nombre, el id de la tabla y el id que debe tener.
@@ -132,16 +189,9 @@ class AdColumn extends DataHandler
 		$tmp_obj  = new TAdMig();
 		
 		$elem_obj = new AdElement();
-		$elem_obj->load();
-
-		$ref_obj = new AdReference();
-		$ref_obj->load();
-
-		$vr_obj = new AdValRule();
-		$vr_obj->load();
-
+		$ref_obj  = new AdReference();
+		$vr_obj   = new AdValRule();
 		$tabla_obj = new AdTable();
-		$tabla_obj->load();
 
 		$values_array['AD_CLIENT_ID'] = 0; 
 		$values_array['AD_ORG_ID'] = 0;	// AD_Org_ID

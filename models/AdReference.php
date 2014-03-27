@@ -15,6 +15,7 @@ class AdReference extends DataHandler
 		return $this->tablename;
 	}
 
+	/**/
 	public function __construct()
 	{
 		parent::load();
@@ -166,6 +167,13 @@ class AdReference extends DataHandler
 		return $values_array;
 	}
 
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
 	//Funcion que migra los reference List y Table creados del origen al destino.
 	public function migrateChildTable( $parent_id, $new_parent_id, $child_tablename, $save_changes = true )
 	{
@@ -218,72 +226,66 @@ class AdReference extends DataHandler
 	}
 
 	/**/
-	public function cMigrateByName( $name, $last_id_ref, $save_changes = true )
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
-		$ref_name = $name;	
-		echo "<br> migrando referencia $ref_name.... <br>";
-		$ref_exists = $this->cCountByExpression( $ref_name ); 
+		$entity_name = $name;
+		$last_id_entity = $last_id;
+
+		echo "<br> {$this->tablename} :: migrando referencia $entity_name.... <br>";
+
+		$exists = $this->cCountByExpression( $entity_name ); 
 		
-		if ($ref_exists == 0) 
+		if ($exists == 0) 
 		{
 			// se buscan los datos completos de la fila
-			$ref_values_array = $this->cFindByExpression( $ref_name );
-			if ( $ref_values_array['AD_REFERENCE_ID'] >= 5000000 )
+			$values_array = $this->cFindByExpression( $entity_name );
+
+			if ( $values_array['AD_REFERENCE_ID'] >= 5000000 )
 			{
 				echo " referencia extendida <br/>";
-				// se guarda ids en tabla temporal
-				//$tmp_obj->cPut( $ref_values_array['AD_ELEMENT_ID'], $last_id_elem, $ref_values_array['COLUMNNAME'], self::TABLENAME );
-				$old_ref_id = $ref_values_array['AD_REFERENCE_ID'];
-				$ref_values_array['AD_REFERENCE_ID'] = $last_id_ref;
-				// se guarda
-
-				$this->cPut( $ref_values_array, $save_changes );
-			
-				//echo ( $ref_values_array['VALIDATIONTYPE'] );
-				//Esto se refiere al migrar, en caso de la referencia tenga una validacion distinta al datatype se migra el elemento.
 				
-				switch ($ref_values_array['VALIDATIONTYPE']) 
+				$old_ref_id = $values_array['AD_REFERENCE_ID'];
+				$values_array['AD_REFERENCE_ID'] = $last_id_entity;
+				$this->cPut( $values_array, $save_changes );
+			
+				//Esto se refiere al migrar, en caso de la referencia tenga una validacion distinta al datatype se migra el elemento.
+				switch ( $values_array['VALIDATIONTYPE'] ) 
 				{
 					case "'L'":
-						$this->migrateChildTable($old_ref_id, $ref_values_array['AD_REFERENCE_ID'], 'AD_REF_LIST');
+						$this->migrateChildTable($old_ref_id, $values_array['AD_REFERENCE_ID'], 'AD_REF_LIST');
 						break;
 
 					case "'T'":
-						$this->migrateChildTable($old_ref_id, $ref_values_array['AD_REFERENCE_ID'], 'AD_REF_TABLE');
+						$this->migrateChildTable($old_ref_id, $values_array['AD_REFERENCE_ID'], 'AD_REF_TABLE');
 						break;
 
 					case "'D'":
 					default:	
 						break;
-				}			
-				
-				$last_id_ref++;
+				}
 			}
 			else
 			{
-				echo "<br/> La referencia ya esta en compiere original. <br/>";
+				$values_array = $this->cFindByExpression( $name, false );
+				$last_id_entity = $values_array['AD_REFERENCE_ID'];
+				echo "<br> La referencia ya esta en compiere original - $name con ID:$last_id_entity <br>";		
 			}
 		}
 		else
 		{
-			$ref_values_array = $this->cFindByExpression( $ref_name, false );
-			$refo_values_array = $this->cFindByExpression( $ref_name );
-			if ( $ref_values_array['AD_ELEMENT_ID'] >= 5000000 )
-			{
-				echo " referencia extendida <br/>";
-				$tmp_obj->cPut( $refo_values_array['AD_REFERENCE_ID'], $ref_values_array['AD_REFERENCE_ID'], $ref_values_array['NAME'], self::TABLENAME );
-			}
-		}
-		
-	} // end cMigrate
+			$values_array = $this->cFindByExpression( $entity_name, false );
+			$last_id_entity = $values_array['AD_REFERENCE_ID'];
+			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
+		}	
+
+		return $last_id_entity;
+	} // end cMigrateByName
 
 /*
 	public function cMigrate( $values_array, $new_ref_id, $save_changes = true )
 	{
 		$id_old = $values_array['AD_REFERENCE_ID'];
 		$tmp_obj = new TAdMig( $save_changes );
-
-		$this->load();
 
 		if ( $values_array['AD_REFERENCE_ID'] >= 5000000 )
 		{
@@ -328,8 +330,6 @@ class AdReference extends DataHandler
 	{
 		$id_old  = $parent_id;
 		$tmp_obj = new TAdMig( $save_changes );
-
-		$this->load();
 
 		$last_id_refv = $this->cLastID() + 1; 
 		$refv_list    = $this->cGet_Value( $id_old ); // TODO: Actualizar el nombre de la función.

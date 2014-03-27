@@ -22,14 +22,7 @@ $table_obj = new AdTable();
 $fld_obj = new AdField();
 $ref_obj = new AdReference();
 $col_obj = new AdColumn();
-$tmp_obj = new TAdMig( $save_changes );
 
-$tab_obj->load();
-$win_obj->load();
-$fld_obj->load();
-$ref_obj->load();
-$col_obj->load();
-$table_obj->load();
 
 $last_id_parent = $win_obj->cLastID() + 1;
 $last_id_child  = $tab_obj->cLastID() + 1;
@@ -42,9 +35,10 @@ foreach ($data as $item)
 
 	// se busca el id original de la tabla para buscar las pestañas
 	$id_old  = $values_array['AD_WINDOW_ID'];
-	echo "<br/> AD_WIN: $id_old -> $last_id_parent <br/>";
+	//echo "<br/> AD_WIN: $id_old -> $last_id_parent <br/>";
 
-	$win_obj->cMigrate( $values_array, $last_id_parent, $save_changes );
+	$win_obj->cMigrateByName( $item['UPPER(NAME)'], $last_id_parent, $save_changes );
+	
 	
 	$children_array = $tab_obj->cFindByParentID( $id_old );
 	foreach ($children_array as $childname)
@@ -57,7 +51,7 @@ foreach ($data as $item)
 
 		$tab_obj->cMigrate( $child_values_array, $last_id_child, $id_old, $save_changes );
 
-		$gchildren_array = $fld_obj->cFindByParentID( $child_id_old );
+		/*$gchildren_array = $fld_obj->cFindByParentID( $child_id_old );
 		foreach ($gchildren_array as $gcname)
 		{
 			echo "<br>** migrando field $gcname.... **<br>";
@@ -126,11 +120,12 @@ foreach ($data as $item)
 			$fld_obj->cPut( $gchild_values_array, $save_changes );
 
 			$last_id_gchild++;
-		}
+		}*/
 
 		$last_id_child++;
 		
 	} // end foreach
+	
 
 	$last_id_parent++;	
 	

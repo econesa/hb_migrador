@@ -14,7 +14,7 @@ class AdTab extends DataHandler
 		return $this->tablename;
 	}
 	
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename  = 'AD_WINDOW'; // ojo quizas falta 
@@ -94,6 +94,23 @@ class AdTab extends DataHandler
 
 		return $values_array;
 	}
+
+	/*  */
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
+	/*  */
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
+	{
+		$entity_name = $name;
+		$last_id_entity = $last_id;
+
+		// TODO
+	}
 	
 	/* Migra una ventana dado su nombre y el id que debe tener.
 	**/
@@ -101,35 +118,12 @@ class AdTab extends DataHandler
 	{
 		$tmp_obj = new TAdMig( $save_changes );
 		//$tmp_obj->truncate();
-		
-		$this->load();
 
 		$id_old    = $values_array['AD_TAB_ID']; // guardar el id original
 
 		//
 		$table_obj  = new AdTable();
-		$table_obj->load();
-		$last_id_child = $table_obj->cLastID() + 1;
-		$table_values_array = $table_obj->cFindAllByParentId( $values_array['AD_TAB_ID'] );
-		foreach ($table_values_array as $childname)
-		{
-			echo "<br>** migrando tabla $childname.... **<br>";
-			$children_array = $table_obj->cFindByExpression( $childname );
-			$adtablename = strtoupper(substr( $children_array['TABLENAME'], 1, -1 ));
-			$tbl_count = $table_obj->cCountByExpression( $adtablename );
-			echo "count(*) = $tbl_count => No se encuentra en el destino <br/>";
-			if ( $tbl_count == 0)
-			{
-				$table_obj->cMigrate( $children_array, $last_id_child, $save_changes );
-				$last_id_child++;
-			}
-			else
-			{
-				$tmp_obj->cPut( $children_array['AD_TABLE_ID'], $table_obj->cFindByExpression( $childname ), "'$adtablename'", 'AD_TABLE' );
-			}
-
-		} // end foreach
-
+		$values_array['AD_TABLE_ID'] = $table_obj->cMigrateByPK( $children_array['AD_TABLE_ID'], $last_id_child, $save_changes );
 		
 		echo "<br>** migrando pestaña {$values_array['NAME']}.... **<br>";
 /*
@@ -138,29 +132,12 @@ class AdTab extends DataHandler
 		$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
 		$seq_obj->cPut( $seq_array, $save_changes );
 */
-		//$tmp_obj->cPut( $id_old, $table_id, $values_array['NAME'], $this->tablename );
-
+		
 		$values_array['AD_TAB_ID']    = $table_id;
-
-		//verifica que el nombre de la tabla exista en el destino y buscar el valor del id.
-		$new_table_id = $table_obj->cFindDPKBySPK( $values_array['AD_TABLE_ID'] );
-		if ( strcmp($new_table_id, 'NULL') != 0 ) 
-			$values_array['AD_TABLE_ID']  = $new_table_id;
-		else
-		{
-			// como es un campo obligatorio que devuelva NULL significa que no ha sido migrada la tabla aun
-			/*
-			$table_name   = $table_obj->cFindNameBySPK( $values_array['AD_TABLE_ID'] );
-			$table_values_array = $table_obj->cFindByExpression( $table_name );
-	
-			$table_obj->cMigrate( $table_values_array, $last_id_child, $save_changes );
-			$values_array['AD_TABLE_ID'] = $last_id_child;
-			*/
-		}
 		
 		// actualizar al id de la validacion dinamica del destino
 		$win_obj = new AdWindow();
-		$win_obj->load();
+		
 		$win_name  = $win_obj->cFindNameBySPK( $values_array[$win_obj->getTablename() . '_ID'] );
 		if ( !empty($win_name) )
 		{

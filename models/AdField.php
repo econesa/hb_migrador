@@ -18,7 +18,7 @@ class AdField extends DataHandler
 		return $this->expression;
 	}
 
-	public function load()
+	public function __construct()
 	{
 		parent::load();
 		$this->parent_tablename = 'AD_TAB';
@@ -85,6 +85,23 @@ class AdField extends DataHandler
 		oci_close($connection);
 
 		return $values_array;
+	}
+
+	/*  */
+	public function cMigrateByPK( $pk_id, $save_changes = true )
+	{
+		$entity_name = $this->cFindNameBySPK( $pk_id );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		return $last_id_entity;	
+	} // end cMigrateByPK
+
+	/*  */
+	public function cMigrateByName( $name, $last_id, $save_changes = true )
+	{
+		$entity_name = $name;
+		$last_id_entity = $last_id;
+
+		// TODO
 	}
 
 } // end class
