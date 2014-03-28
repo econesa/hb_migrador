@@ -74,7 +74,8 @@ class AdColumn extends DataHandler
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
 		{}
-		else{ 
+		else
+		{ 
 			$e = oci_error($stmt); 
 			echo $e['message'] . '<br/>'; 
 		}
@@ -129,25 +130,27 @@ class AdColumn extends DataHandler
 		return $values_array;
 	}
 
-	public function cMigrateByPK( $pk_id, $save_changes = true )
+	public function cMigrateByPK( $pk_id, $parent_id, $save_changes = true )
 	{
 		$entity_name = $this->cFindNameBySPK( $pk_id );
-		$last_id_entity = $this->cMigrateByName( $entity_name, $this->cLastID() + 1, $save_changes );
+		$last_id_entity = $this->cMigrateByName( $entity_name, $parent_id, $this->cLastID() + 1, $save_changes );
 		return $last_id_entity;	
 	} // end cMigrateByPK
 
 	/**/
-	public function cMigrateByName( $name, $parent_id, $last_id, $last_id_table, $save_changes = true )
+	public function cMigrateByName( $name, $parent_id, $last_id, $save_changes = true )
 	{
-		$col_name = $name;
+		$entity_name = $name;
 		$last_id_col = $last_id;
 
+		//$last_id_table = 0;
+
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
-		$exists = $this->cCount( $col_name, $parent_id ); 
+		$exists = $this->cCount( $entity_name, $parent_id ); 
 		if ( $exists == 0 ) 
 		{ 
-			echo "<br> migrando columna $col_name.... <br>";
-			$values_array = $this->cFindByExpression( $col_name, $parent_id );
+			echo "<br> migrando columna $entity_name.... <br>";
+			$values_array = $this->cFindByExpression( $entity_name, $parent_id );
 			
 			$values_array['AD_PROCESS_ID'] = 'NULL';
 
@@ -166,7 +169,9 @@ class AdColumn extends DataHandler
 			else
 				$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
 
-			$values_array[ 'AD_TABLE_ID' ] = $last_id_table;
+			$table_obj  = new AdTable();
+			//TODO: deberia buscarse no intentar migrarlo
+			$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $values_array[ 'AD_TABLE_ID' ], $save_changes );
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{

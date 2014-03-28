@@ -223,7 +223,7 @@ abstract class DataHandler
 		$value = '';
 		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
 				    WHERE  {$this->tablename}_ID = $pk_id ";
-		//echo "<br>*** $query ***<br>";
+		echo "<br>*** $query ***<br>";
 
 		try
 		{
