@@ -141,46 +141,57 @@ class AdColumn extends DataHandler
 	public function cMigrateByName( $name, $parent_id, $last_id, $save_changes = true )
 	{
 		$entity_name = $name;
-		$last_id_col = $last_id;
-
-		//$last_id_table = 0;
+		$last_id_entity = $last_id;
 
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
 		$exists = $this->cCount( $entity_name, $parent_id ); 
 		if ( $exists == 0 ) 
-		{ 
-			echo "<br> migrando columna $entity_name.... <br>";
+		{ 			
 			$values_array = $this->cFindByExpression( $entity_name, $parent_id );
 			
-			$values_array['AD_PROCESS_ID'] = 'NULL';
-
-			$elem_obj  = new AdElement();
-			$values_array['AD_ELEMENT_ID'] = $elem_obj->cMigrateByPK( $values_array['AD_ELEMENT_ID'], $save_changes );
-			
-			$ref_obj   = new AdReference(); 
-			if ( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'] != 0 )
-				$values_array[$ref_obj->getTablename() . '_VALUE_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
-			else
-				$values_array[ $ref_obj->getTablename() . '_VALUE_ID'] = 'NULL';
-
-			$valrule_obj  = new AdValRule(); 
-			if ( $values_array[ $valrule_obj->getTablename() . '_ID'] != 0 )
-				$values_array[ $valrule_obj->getTablename() . '_ID'] = $valrule_obj->cMigrateByPK( $values_array['AD_VAL_RULE_ID'], $save_changes );
-			else
-				$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
-
-			$table_obj  = new AdTable();
-			//TODO: deberia buscarse no intentar migrarlo
-			$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $values_array[ 'AD_TABLE_ID' ], $save_changes );
-
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				//echo " elemento extendido <br/>";
-				$values_array[ $this->tablename . '_ID' ] = $last_id_col;
+				$values_array['AD_PROCESS_ID'] = 'NULL';
+
+				$elem_obj  = new AdElement();
+				$values_array['AD_ELEMENT_ID'] = $elem_obj->cMigrateByPK( $values_array['AD_ELEMENT_ID'], $save_changes );
+				
+				echo "<br> AD_COLUMN:: verificando referencia debido a columna $entity_name ... <br>";
+				$ref_obj   = new AdReference(); 
+				if ( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'] != 0 )
+					$values_array[$ref_obj->getTablename() . '_VALUE_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
+				else
+					$values_array[ $ref_obj->getTablename() . '_VALUE_ID'] = 'NULL';
+
+				echo "<br> AD_COLUMN:: verificando val rule debido a columna $entity_name ... <br>";
+				$valrule_obj  = new AdValRule(); 
+				if ( $values_array[ $valrule_obj->getTablename() . '_ID'] != 0 )
+					$values_array[ $valrule_obj->getTablename() . '_ID'] = $valrule_obj->cMigrateByPK( $values_array['AD_VAL_RULE_ID'], $save_changes );
+				else
+					$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
+
+				echo "<br> AD_COLUMN:: verificando tabla {$parent_id} debido a columna $entity_name ... <br>";
+				$table_obj    = new AdTable();
+				$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $parent_id, true );
+
+			
+				echo "<br> migrando columna $entity_name.... <br>";
+				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				$this->cPut( $values_array, $save_changes );
-				$last_id_col++;
+			}
+			else
+			{
+				echo ' la columna es de compiere original';
 			}
 		}
+		else
+		{
+			$values_array = $this->cFindByExpression( $entity_name, false );
+			$last_id_entity = $values_array[ $this->tablename . '_ID' ];
+			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
+		}
+
+		return $last_id_entity;
 	} // end cMigrateByName
 
 	/* Migra una columna dado su nombre, el id de la tabla y el id que debe tener.

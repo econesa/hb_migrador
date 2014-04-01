@@ -1,6 +1,7 @@
 <?php 
 //include '../utils.php';
 include_once 'AdTab.php';
+include_once 'AdColumn.php';
 
 //session_start();
 
@@ -36,7 +37,7 @@ class AdField extends DataHandler
 		$query = " SELECT {$this->expression} 		
 			  	   FROM   COMPIERE.{$this->tablename} t 
 			  	   WHERE  {$this->parent_tablename}_ID = {$parent_id} ";
-		echo "<br/> $query <br/>";
+		//echo "<br/> $query <br/>";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -58,7 +59,7 @@ class AdField extends DataHandler
 
 		$query  = " SELECT * FROM $this->tablename t 
 					WHERE $this->expression LIKE '$value' AND {$this->parent_tablename}_ID = $parentID ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 
 		try
 		{
@@ -105,77 +106,48 @@ class AdField extends DataHandler
 	} // end cMigrateByPK
 
 	/*  */
-	public function cMigrateByName( $name, $last_id, $parent_id, $save_changes = true )
+	public function cMigrateByName( $name, $last_id, $parent_id, $new_parent_id, $save_changes = true )
 	{
 		$entity_name = $name;
 		$last_id_entity = $last_id;
 		
 		$ref_obj = new AdReference();
-		
-		echo "<br>$parent_id<br>";
+		$tab_obj = new AdTab();
+		$col_obj = new AdColumn();
+
+		//P1
 		$values_array = $this->cFindByExpression( $entity_name, $parent_id );
 	
 		$gchild_id_old = $values_array['AD_FIELD_ID'];	
 
-		// SE NECESITA obtener el ad_table_id de la pestaña ( o columna )
-		$tab_obj = new AdTab();
+		//P2 
+		$values_array['AD_TAB_ID'] = $new_parent_id;
+		
 		$tab_values_array = $tab_obj->cFindByPK( $parent_id );
 
-		$col_obj = new AdColumn();
-		$col_obj->cMigrateByPK( $values_array['AD_COLUMN_ID'],  $tab_values_array['AD_TABLE_ID'], $save_changes );
+		echo "<br> AD_FIELD:: verificando columna {$values_array['AD_COLUMN_ID']} debido a campo $entity_name ... <br>";
+		$values_array['AD_COLUMN_ID'] = $col_obj->cMigrateByPK( $values_array['AD_COLUMN_ID'], $tab_values_array['AD_TABLE_ID'], $save_changes );
 
 		$values_array['AD_FIELDGROUP_ID'] = 'NULL';
 
-		echo "<br>** migrando field $entity_name.... **<br>";
-		/*	
-		$colArrayAllData = $this->cFindByPK(  );
-		$colname = strtoupper(substr( $colArrayAllData['NAME'], 1, -1 )); //asumiendo que la funcion CFindByPK siempre devolverá un arreglo. (Ojo: Validar)
-	 	if( $this->cCountByExpression( $colname ) == 0 )
-	 	{			 		
-	 		$col_obj->cMigrate( $colname, $values_array->cLastID() + 1, $child_values_array['AD_TABLE_ID'], $save_changes );
-	 		$values_array['AD_COLUMN_ID'] = $tmp_obj->cGetIDByOldID( 'AD_COLUMN', $values_array['AD_COLUMN_ID'] );
-	 	}
-	 	else 
-	 	{
-	 		$table_id_s = $table_obj->cFindDPKBySPK( $child_values_array['AD_TABLE_ID'] );
-	 		if ( $table_id_s != -1 )
-	 		{
-	 			$tmp_array  = $col_obj->cFindByExpression( $colname, $table_id_s, false );
-	 			$values_array['AD_COLUMN_ID'] = $tmp_array['AD_COLUMN_ID'];
-	 		}
-	 	}
-	 	*/
-
-		// buscar el id correcto para la referencia del campo
-		if( $values_array['AD_REFERENCE_ID'] == 0 )
-		{
-			$values_array['AD_REFERENCE_ID'] = 'NULL';
-		}
+		echo "<br> AD_FIELD:: verificando referencia {$values_array['AD_COLUMN_ID']} debido a campo $entity_name ... <br>";
+		$ref_obj   = new AdReference(); 
+		if ( $values_array[ $ref_obj->getTablename() . '_ID'] != 0 )
+			$values_array[$ref_obj->getTablename() . '_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
 		else
-		{
-		/*
-			$refArrayAllData = $ref_obj->cFindByPK( $gchild_values_array['AD_REFERENCE_ID'] );
-			$refname = $refArrayAllData['NAME']; //asumiendo que la funcion CFindByPK siempre devolverá un arreglo. (Ojo: Validar)
-		 	if($ref_obj->cCountByExpression( $refname ) == 0 )
-		 	{
-		 		$ref_obj->cMigrateByParentId( $child_values_array['AD_TABLE_ID'], $save_changes );
-		 		$values_array['AD_REFERENCE_ID'] = $tmp_obj->cGetIDByOldID( 'AD_REFERENCE', $values_array['AD_REFERENCE_ID'] );
-		 	}	
-		 	else 
-		 	{
-		 		//$tmp_obj->cPut( , $refArrayAllData['AD_REFERENCE_ID'], $refname, 'AD_REFERENCE' );
-		 		$values_array['AD_REFERENCE_ID'] = $refArrayAllData['AD_REFERENCE_ID'];
-		 	}
-		*/
-		}
-			
-		//$values_array['AD_TAB_ID']    = $last_id_child;
+			$values_array[ $ref_obj->getTablename() . '_ID'] = 'NULL';
+		
+		//P3	
 		$values_array['AD_FIELD_ID']  = $last_id_entity;
-
+		
+		//P4
 		// se prepara consulta de migracion con id nuevo
+		echo "<br> migrando field $entity_name ... <br>";
 		$this->cPut( $values_array, $save_changes );
 
-	}
+		return $last_id_entity;
+
+	} // end cMigrateByName
 
 } // end class
 

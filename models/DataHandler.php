@@ -82,7 +82,7 @@ abstract class DataHandler
 			echo "Exception: $exc->getMessage() <br>";
 		}
 		
-		echo " $this->tablename : $last_id <br/>";
+		//echo " $this->tablename : $last_id <br/>";
 
 		return $last_id;
 	}
@@ -138,7 +138,15 @@ abstract class DataHandler
 		//echo "<br> $query <br/>";		
 		try
 		{
-			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			if ( $extern )
+			{
+				$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			}
+			else
+			{
+				$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+			}
+			
 			$stmt = oci_parse( $connection, $query );
 			if ( oci_execute( $stmt ) ) 
 			{				
@@ -165,7 +173,7 @@ abstract class DataHandler
 	} // end cFindAllByParentId
 
 	/**/
-	public function cFindByPK( $pk_id )
+	public function cFindByPK( $pk_id, $extern = true )
 	{
 		$i = 0;
 		$values_array  = array();
@@ -176,7 +184,14 @@ abstract class DataHandler
 		
 		try
 		{
-			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			if ( $extern )
+			{
+				$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			}
+			else
+			{
+				$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+			}
 			
 			$tarray = listarTiposDeTabla( $connection, $this->tablename );
 
@@ -189,7 +204,7 @@ abstract class DataHandler
 				// parsear data para poder colocarla en el insertar
 				foreach ( $values_array as $indice => $field )
 				{
-					if (empty($field))
+					if ( empty($field) )
 					{
 						$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
 					}
@@ -223,7 +238,7 @@ abstract class DataHandler
 		$value = '';
 		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
 				    WHERE  {$this->tablename}_ID = $pk_id ";
-		echo "<br>*** $query ***<br>";
+		//echo "<br>*** $query ***<br>";
 
 		try
 		{
@@ -261,7 +276,7 @@ abstract class DataHandler
 		$value = '';
 		$query  = " SELECT {$this->expression} FROM {$this->tablename} t
 				    WHERE  {$this->tablename}_ID = $pk_id ";
-		echo "<br> $query <br>";
+		//echo "<br> $query <br>";
 
 		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 
@@ -288,7 +303,7 @@ abstract class DataHandler
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 
 		$query  = " SELECT {$this->tablename}_ID FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		echo "<br/> $query <br/>";
+		//echo "<br/> $query <br/>";
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )

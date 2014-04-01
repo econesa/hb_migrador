@@ -26,15 +26,22 @@ class AdTable extends DataHandler
 	}
 
 	/**/
-	public function cFindByExpression( $value )
+	public function cFindByExpression( $value, $extern = true )
 	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		
-		$values_array = array();
-		$tarray = listarTiposDeTabla( $connection, $this->tablename );
-
 		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
 		//echo "<br/> $query <br/>";
+
+		if ( $extern )
+		{
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		}
+		else
+		{
+			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+		}
+		
+		$values_array = array();
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );		
 
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
@@ -44,7 +51,7 @@ class AdTable extends DataHandler
 
 			foreach ( $values_array as $indice => $field )
 			{
-				if (empty($field))
+				if ( empty($field) )
 				{
 					$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
 				}
@@ -62,7 +69,7 @@ class AdTable extends DataHandler
 	        echo $e['message']; 
 		}
 		
-		oci_close($connection);
+		oci_close( $connection );
 		
 		return $values_array;
 	}
@@ -101,59 +108,8 @@ class AdTable extends DataHandler
 		return $data;
 	}
 
-	/*
-	public function cFindByPK( $pk_id )
-	{
-		$values_array  = array();
-		$tablename  = self::TABLENAME;
-		
-		$username   = $_SESSION['user_origen'];
-		$password   = $_SESSION['user_opw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_origen'] . '/XE' );
-		
-		$tarray = listarTiposDeTabla( $connection, self::TABLENAME );
-
-		$query = 
-			" SELECT  t.*
-			  FROM    COMPIERE.{$tablename} t
-			  WHERE   {$tablename}_ID = {$pk_id} ";
-		echo "<br> $query <br>";
-
-		$stmt = oci_parse( $connection, $query );
-
-		if ( oci_execute( $stmt ) )
-		{
-			$values_array = oci_fetch_assoc( $stmt ); 
-			$i = 0;
-
-			// parsear data para poder colocarla en el insertar
-			foreach ( $values_array as $indice => $field )
-			{
-				if (empty($field))
-				{
-					$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
-				}
-				else
-				{
-					$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
-				}
-				$i++;	
-			}		
-
-		} // execute 
-		else
-		{
-			$e = oci_error( $stmt ); 
-	        echo $e['message']; 
-		}
-
-		oci_close($connection);
-		
-		return $values_array;
-	}*/
-
 	/**/
-	function cFindByExpressionAndParentID( $parentTableName, $value, $parentID )
+	public function cFindByExpressionAndParentID( $parentTableName, $value, $parentID )
 	{
 		$values_array = array();
 		
@@ -221,8 +177,8 @@ class AdTable extends DataHandler
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				echo " elemento extendido <br/>";
-				echo '<br/> se coloca val_rule en NULL <br/>';
+				echo "<br/>  elemento extendido <br/>";
+				echo 'se coloca val_rule en NULL <br/>';
 				$values_array['AD_VAL_RULE_ID'] = 'NULL';
 				$values_array['PO_WINDOW_ID']   = 'NULL';
 				$values_array['DATECOLUMN_ID']  = 'NULL';

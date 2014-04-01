@@ -1,5 +1,5 @@
 <?php 
-//include '../utils.php';
+include_once '../../utils.php';
 include_once 'DataHandler.php';
 
 //session_start();
@@ -69,12 +69,15 @@ class AdWindow extends DataHandler
 
 	public function cMigrateByName( $name, $last_id_win, $save_changes = true )
 	{
+		$last_id_entity = $last_id_win;
 		$win_name = $name;	
-		echo "<br> migrando ventanas $win_name.... <br>";
+		
 		$win_exists = $this->cCountByExpression( $win_name ); 
 		
 		if ($win_exists == 0) 
 		{
+			echo "<br> migrando ventana $win_name.... <br>";
+
 			// se buscan los datos completos de la fila
 			$win_values_array = $this->cFindByExpression( $win_name );
 			if ( $win_values_array['AD_WINDOW_ID'] >= 5000000 )
@@ -83,7 +86,7 @@ class AdWindow extends DataHandler
 				// se prepara consulta de migracion con id nuevo
 				$win_values_array['AD_CLIENT_ID'] = $win_values_array['AD_ORG_ID'] = 0;
 				$win_values_array['AD_IMAGE_ID']  = $win_values_array['AD_CTXAREA_ID'] = $win_values_array['AD_COLOR_ID']  = 'NULL';
-				$win_values_array['AD_WINDOW_ID'] = $last_id_win; // actualizo al ultimo id
+				$win_values_array['AD_WINDOW_ID'] = $last_id_entity; // actualizo al ultimo id
 				
 				$this->cPut( $win_values_array, $save_changes );
 				$last_id_win++;
@@ -93,6 +96,8 @@ class AdWindow extends DataHandler
 				echo "<br/> La ventana es original de compiere. <br/>";
 			}
 		}
+
+		return $last_id_entity;
 		
 	} // end cMigrateByName
 
