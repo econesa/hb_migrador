@@ -133,9 +133,9 @@ abstract class DataHandler
 		$query = " SELECT {$this->expression} 
 				   FROM   COMPIERE.{$this->tablename} t 
 				   JOIN   AD_COLUMN columna ON (columna.{$this->tablename}_ID = t.{$this->tablename}_ID) 
-				   WHERE  columna.{$this->parent_tablename}_ID = $parent_id ";
-		
+				   WHERE  columna.{$this->parent_tablename}_ID = $parent_id ";		
 		//echo "<br> $query <br/>";		
+
 		try
 		{
 			if ( $extern )
@@ -299,7 +299,7 @@ abstract class DataHandler
 	{
 		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 		
-		$rs_id = -1;
+		$rs_id  = -1;
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
 
 		$query  = " SELECT {$this->tablename}_ID FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
@@ -346,26 +346,36 @@ abstract class DataHandler
 	/* prepara el insert de una entidad y lo ejecuta */
 	public function cPut( $values_array, $save_changes = true  )
 	{		
-		$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-		$insert_q   = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
+		try 
+		{
+			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+			$insert_q   = dameElInsertParcialDeLaTabla( $connection, $this->tablename );
 
-		$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
-		echo "<br> $query <br/>";
+			$query = $insert_q . ' VALUES (' . implode(",", $values_array) . ')';
+			echo "<br> $query <br/>";
 
-		$stmt = oci_parse( $connection, $query );
+			$stmt = oci_parse( $connection, $query );
 
-		if ( $save_changes )
-			if ( oci_execute( $stmt ) )
+			if ( $save_changes )
 			{
-				echo "<br> insertado <br/>"; 
-			}
-			else
-			{
-				$e = oci_error( $stmt ); 
-				echo $e['message'] . '<br/>'; 
-			}	
-		
-		oci_close( $connection );	
+				if ( oci_execute( $stmt ) )
+				{
+					echo "<br> insertado <br/>"; 
+				}
+				else
+				{
+					$e = oci_error( $stmt ); 
+					echo $e['message'] . '<br/>'; 
+				}	
+			}			
+			
+			oci_close( $connection );		
+		} 
+		catch( Exception $exc )
+		{
+			echo "Exception: $exc->getMessage() <br>";
+		}
+	
 	}
 
 	/* Calcula la diferencia que hay entre dos entidades y retorna el resultado en formato json */
@@ -373,8 +383,6 @@ abstract class DataHandler
 	{
 		$result = array();
 		$offset2 = 0;
-
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
 
 		$mip = explode(".", $this->path_d );
 		$enlace = 'HBE_DESA_' . $mip[3]; //Database Link
@@ -388,6 +396,9 @@ abstract class DataHandler
 			    SELECT $expression 
 			    FROM   COMPIERE.{$this->tablename}@$enlace t2)
 			";
+
+		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		
 		$stmt = oci_parse( $conn, $query );
 		
 		if ( oci_execute( $stmt ) )
@@ -425,6 +436,6 @@ abstract class DataHandler
 		return json_encode($result);
 	}
 
-
 } // end class
+
 ?>

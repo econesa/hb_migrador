@@ -30,54 +30,59 @@ class AdTable extends DataHandler
 	{
 		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
 		//echo "<br/> $query <br/>";
-
-		if ( $extern )
-		{
-			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		}
-		else
-		{
-			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-		}
-		
 		$values_array = array();
-		$tarray = listarTiposDeTabla( $connection, $this->tablename );		
 
-		$stmt = oci_parse( $connection, $query );
-		if ( oci_execute( $stmt ) )
+		try
 		{
-			$values_array = oci_fetch_assoc( $stmt ); 
-			$i = 0;
-
-			foreach ( $values_array as $indice => $field )
+			if ( $extern )
 			{
-				if ( empty($field) )
-				{
-					$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
-				}
-				else
-				{
-					$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
-				}
-				$i++;	
-			}		
+				$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			}
+			else
+			{
+				$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+			}
 
-		} // execute 
-		else
-		{
-			$e = oci_error( $stmt ); 
-	        echo $e['message']; 
+			$tarray = listarTiposDeTabla( $connection, $this->tablename );		
+
+			$stmt = oci_parse( $connection, $query );
+			if ( oci_execute( $stmt ) )
+			{
+				$values_array = oci_fetch_assoc( $stmt ); 
+				$i = 0;
+
+				foreach ( $values_array as $indice => $field )
+				{
+					if ( empty($field) )
+					{
+						$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
+					}
+					else
+					{
+						$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
+					}
+					$i++;	
+				}	
+			} // execute 
+			else
+			{
+				$e = oci_error( $stmt ); 
+		        echo $e['message']; 
+			}
+			
+			oci_close( $connection );
 		}
-		
-		oci_close( $connection );
+		catch( Exception $exc )
+		{
+			echo "Exception: $exc->getMessage() <br>";
+		}
 		
 		return $values_array;
-	}
+	} // cFindByExpression
 
 	/**/
 	public function cFindAllByParentId( $parent_id )
-	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+	{		
 		$data = array();
 
 		$query = " SELECT {$this->expression} 
@@ -86,24 +91,34 @@ class AdTable extends DataHandler
 				   WHERE  parent.{$this->parent_tablename}_ID = $parent_id ";
 		
 		//echo "<br> $query <br/>";
-		
-		$stmt = oci_parse( $connection, $query );
-		if ( oci_execute( $stmt ) ) 
+
+		try
 		{
-			$e = 0;			
-			while ( ($row = oci_fetch_assoc($stmt)) != false ) 
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+
+			$stmt = oci_parse( $connection, $query );
+			if ( oci_execute( $stmt ) ) 
 			{
-				$data[$e] = $row[$this->expression];
-			    $e++;
+				$e = 0;			
+				while ( ($row = oci_fetch_assoc($stmt)) != false ) 
+				{
+					$data[$e] = $row[$this->expression];
+				    $e++;
+				}
 			}
+			else
+			{
+				$e = oci_error( $stmt ); 
+		        echo $e['message']; 
+			}
+			// oci_free_statement($stmt);
+			oci_close($connection);
+		
 		}
-		else
+		catch( Exception $exc )
 		{
-			$e = oci_error( $stmt ); 
-	        echo $e['message']; 
+			echo "Exception: $exc->getMessage() <br>";
 		}
-		// oci_free_statement($stmt);
-		oci_close($connection);
 		
 		return $data;
 	}
@@ -112,35 +127,42 @@ class AdTable extends DataHandler
 	public function cFindByExpressionAndParentID( $parentTableName, $value, $parentID )
 	{
 		$values_array = array();
-		
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-
-		$tarray = listarTiposDeTabla( $connection, $this->tablename );
-		
 		$query = " SELECT * FROM $this->tablename t
 				   JOIN  {$parentTableName} tmp ON ( tmp.{$this->tablename}_ID = t.{$this->tablename}_ID )
 				   WHERE $this->expression LIKE '$value' AND {$parentTableName}_ID = $parentID ";
 		//echo "<br> $query <br>";
-		
+
+		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+
 		$stmt  = oci_parse( $connection, $query );
-		oci_execute( $stmt );
 		
-		if (($result = oci_fetch_row($stmt)) != false) 
+		if ( oci_execute( $stmt ) )
 		{
-			$i = 0;	
-			foreach ($result as $index=>$field)
+			if (($result = oci_fetch_row($stmt)) != false) 
 			{
-				if ( empty( $field ) )
+				$i = 0;	
+				foreach ($result as $index=>$field)
 				{
-					$values_array[$i] = formatEmpty( $tarray[$i]['tipo'], $field );
+					if ( empty( $field ) )
+					{
+						$values_array[$i] = formatEmpty( $tarray[$i]['tipo'], $field );
+					}
+					else
+					{
+						$values_array[$i] = formatData( $tarray[$i]['tipo'], $field );			
+					}
+					++$i;
 				}
-				else
-				{
-					$values_array[$i] = formatData( $tarray[$i]['tipo'], $field );			
-				}
-				++$i;
 			}
 		}
+		else
+		{
+			$e = oci_error( $stmt ); 
+	        echo $e['message']; 
+		}
+		
 		oci_close($connection);
 
 		return $values_array;

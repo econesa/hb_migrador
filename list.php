@@ -161,5 +161,29 @@ $component_id = 'tt4';
 //-------------------------------------------//
 ?>
 
+<?php
+
+//-------------------------------------------//
+$tablename    = 'AD_MENU';
+$expression   = 'UPPER(NAME)';
+$foldername   = 'ad_menu';
+$component_id = 'tt5';
+?>
+<h3><?php echo $tablename; ?></h3>
+<table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto;height:auto;" url="./controllers/<?php echo $foldername; ?>/get.php"
+		rownumbers="true" toolbar="#toolbarMenu" >
+  <thead>
+	 <tr>
+	   <th field="<?php echo 'UPPER(NAME)'; ?>"><?php echo 'UPPER(NAME)'; ?></th>         
+	 </tr>                          
+  </thead>                                                     
+</table>
+<div id="toolbarMenu">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="procesar('#<?php echo $component_id; ?>', '<?php echo $foldername; ?>')">Migrar</a>
+</div>
+<?php
+//-------------------------------------------//
+?>
+
  </body>
 </html>

@@ -4,16 +4,15 @@ include_once 'DataHandler.php';
 
 //session_start();
 
-class AdElement extends DataHandler
+class AdTreeNodeMM extends DataHandler
 {
-	const TABLENAME  =  'AD_ELEMENT';
+	const TABLENAME  =  'AD_TREENODEMM';
 
 	public function __construct()
 	{
 		parent::load();
-		$this->parent_tablename = 'AD_TABLE';
-		$this->tablename  = 'AD_ELEMENT';
-		$this->expression = 'UPPER(T.COLUMNNAME)'; // el indice asociativo esta dado en mayusculas
+		$this->tablename  = 'AD_TREENODEMM';
+		$this->expression = 'UPPER(T.NODE_ID)'; // el indice asociativo esta dado en mayusculas
 	}
 
 	public function getTablename()
@@ -21,9 +20,11 @@ class AdElement extends DataHandler
 		return $this->tablename;
 	}
 	
-	public function cGet( $parent_id ) // ver si se utiliza aun 
+	/*public function cGet( $parent_id ) // ver si se utiliza aun 
 	{
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		$username   = $_SESSION['user_origen'];
+		$password   = $_SESSION['user_opw'];
+		$connection = oci_connect( $username, $password, $_SESSION['ip_origen'] . '/XE' );
 		
 		$mip   = explode( ".", $_SESSION['ip_destino'] );
 		$dblinkname = 'HBE_DESA_' . $mip[3]; //Database Link
@@ -46,16 +47,18 @@ class AdElement extends DataHandler
 		oci_close( $connection );
 		
 		return $rs;
-	}
+	}*/
 
-	/**/
-	public function cFindByExpression( $value, $extern = true )
+
+	public function cFindAllTree( $pk_id, $extern = true )
 	{
-		$values_array = array();
-		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' ";
-		//echo "<br> $query <br/>";
-		$connection   = null;
-
+		$i = 0;
+		$values_array  = array();
+		$query = " SELECT  t.*
+				   FROM    COMPIERE.{$this->tablename} t
+				   WHERE   {$this->expression} = {$pk_id} ";
+		echo "<br> $query <br>";
+		
 		try
 		{
 			if ( $extern )
@@ -66,17 +69,23 @@ class AdElement extends DataHandler
 			{
 				$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 			}
+			
+			$tarray = listarTiposDeTabla( $connection, 'AD_TREENODEMM' );
 
-			$tarray = listarTiposDeTabla( $connection, $this->tablename );
-			
 			$stmt = oci_parse( $connection, $query );
-			
+
 			if ( oci_execute( $stmt ) )
 			{
-				$values_array = oci_fetch_assoc( $stmt ); 
-				$i = 0;
-				if ( !empty($values_array) )
+				$j = 0;
+				
+				/*$values_array[$j++] = oci_fetch_assoc($stmt);
+				$values_array[$j++] = oci_fetch_assoc($stmt);
+
+				print_r($values_array); exit;*/
+
+				while (($values_array[$j++] = oci_fetch_assoc($stmt)) != false) 
 				{
+				   	// parsear data para poder colocarla en el insertar
 					foreach ( $values_array as $indice => $field )
 					{
 						if ( empty($field) )
@@ -87,24 +96,79 @@ class AdElement extends DataHandler
 						{
 							$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
 						}
-						$i++;
-					}
-				}
+						$i++;	
+					}	 
+				}					
+
 			} // execute 
 			else
 			{
 				$e = oci_error( $stmt ); 
 		        echo $e['message']; 
 			}
-	
-			oci_close($connection);
-		
+
+			oci_close($connection);	
 		}
 		catch( Exception $exc )
 		{
 			echo "Exception: $exc->getMessage() <br>";
+		}		
+		
+		return $values_array;
+	}
+
+
+	/*
+	public function cFindByExpression( $value, $extern = true )
+	{
+		$values_array = array();
+		$tablename    = self::TABLENAME;
+		$connection   = null;
+
+		if ( $extern )
+		{
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		}
+		else
+		{
+			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
 		}
 
+		$query  = " SELECT * FROM $tablename t WHERE $this->expression LIKE '$value' ";
+		//echo "<br> $query <br/>";
+
+		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+		
+		$stmt = oci_parse( $connection, $query );
+		
+		if ( oci_execute( $stmt ) )
+		{
+			$values_array = oci_fetch_assoc( $stmt ); 
+			$i = 0;
+			if ( !empty($values_array) )
+			{
+				foreach ( $values_array as $indice => $field )
+				{
+					if ( empty($field) )
+					{
+						$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
+					}
+					else
+					{
+						$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
+					}
+					$i++;
+				}
+			}
+		} // execute 
+		else
+		{
+			$e = oci_error( $stmt ); 
+	        echo $e['message']; 
+		}
+	
+		oci_close($connection);
+		
 		return $values_array;
 	}
 
@@ -168,7 +232,7 @@ class AdElement extends DataHandler
 			$this->cMigrateByName( $elem_name, $save_changes ); 			
 		}	
 	} // end cMigrate
-
+*/
 
 } // end class
 ?>

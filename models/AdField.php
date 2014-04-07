@@ -31,27 +31,36 @@ class AdField extends DataHandler
 	public function cFindByParentID( $parent_id )
 	{
 		$result = array();
-		
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		
+
 		$query = " SELECT {$this->expression} 		
 			  	   FROM   COMPIERE.{$this->tablename} t 
 			  	   WHERE  {$this->parent_tablename}_ID = {$parent_id} ";
 		//echo "<br/> $query <br/>";
-
-		$stmt = oci_parse( $connection, $query );
-		if ( oci_execute( $stmt ) )
-		{}
-		else{ 
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		}
-		$nrows = oci_fetch_all($stmt, $res);
-
-		oci_close($connection);
+		try
+		{
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
 		
-		return $res[$this->expression];
-	}
+			$stmt = oci_parse( $connection, $query );
+			if ( oci_execute( $stmt ) )
+			{
+				$nrows  = oci_fetch_all($stmt, $res);
+				$result = $res[$this->expression];
+			}
+			else
+			{ 
+				$e = oci_error($stmt); 
+				echo $e['message'] . '<br/>'; 
+			}		
+
+			oci_close($connection);
+		}
+		catch( Exception $exc )
+		{
+			echo "Exception: $exc->getMessage() <br>";
+		}
+		
+		return $result;
+	} // cFindByParentID
 
 	function cFindByExpression( $value, $parentID )
 	{
@@ -67,7 +76,7 @@ class AdField extends DataHandler
 
 			$tarray = listarTiposDeTabla( $connection, $this->tablename );		
 			
-			$stmt  = oci_parse( $connection, $query );
+			$stmt = oci_parse( $connection, $query );
 			if ( oci_execute( $stmt ) )
 			{
 				$values_array = oci_fetch_assoc( $stmt ); 
@@ -95,7 +104,7 @@ class AdField extends DataHandler
 		}
 
 		return $values_array;
-	}
+	} // cFindByExpression
 
 	/*  */
 	public function cMigrateByPK( $pk_id, $parent_id, $save_changes = true )
@@ -125,7 +134,8 @@ class AdField extends DataHandler
 		
 		$tab_values_array = $tab_obj->cFindByPK( $parent_id );
 
-		echo "<br> AD_FIELD:: verificando columna {$values_array['AD_COLUMN_ID']} debido a campo $entity_name ... <br>";
+		echo "<br> AD_FIELD:: verificando columna {$values_array['AD_COLUMN_ID']} debido al campo $entity_name ... <br>";
+
 		$values_array['AD_COLUMN_ID'] = $col_obj->cMigrateByPK( $values_array['AD_COLUMN_ID'], $tab_values_array['AD_TABLE_ID'], $save_changes );
 
 		$values_array['AD_FIELDGROUP_ID'] = 'NULL';

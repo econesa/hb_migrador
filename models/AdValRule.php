@@ -25,27 +25,21 @@ class AdValRule extends DataHandler
 	public function cFindByExpression( $value, $extern = true )
 	{
 		$values_array = array();
-		$tablename    = self::TABLENAME;
+		$query  = " SELECT * FROM {$this->tablename} t WHERE $this->expression LIKE '$value' ";
+		//echo "<br> $query <br/>";
+
 		$connection   = null;
 
 		if ( $extern )
 		{
-			$username   = $_SESSION['user_origen'];
-			$password   = $_SESSION['user_opw'];
-			$connection = oci_connect( $username, $password, $_SESSION['ip_origen'] . '/XE' );
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
 		}
 		else
 		{
-			$username   = $_SESSION['user_destino'];
-			$password   = $_SESSION['user_dpw'];
-			$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
-		}
-
-		$query  = " SELECT * FROM {$this->tablename} t WHERE $this->expression LIKE '$value' ";
-		//echo "<br> $query <br/>";
+			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+		}		
 
 		$tarray = listarTiposDeTabla( $connection, self::TABLENAME );
-		//print_r($value);
 
 		$stmt = oci_parse( $connection, $query );
 		
@@ -91,43 +85,46 @@ class AdValRule extends DataHandler
 	/**/
 	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
-		$referencev_name = $name;
-		$last_id_refv = $last_id;
+		$entity_name = $name;
+		$last_id_entity = $last_id;
 
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
-		$exists = $this->cCountByExpression( $referencev_name ); 
+		$exists = $this->cCountByExpression( $entity_name ); 
 		if ( $exists == 0 ) 
 		{ 
-			$refv_values_array = $this->cFindByExpression( $referencev_name );
+			$refv_values_array = $this->cFindByExpression( $entity_name );
 			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
 			{
 				//echo " elemento extendido <br/>";
-				$refv_values_array['AD_VAL_RULE_ID'] = $last_id_refv;
+				$refv_values_array['AD_VAL_RULE_ID'] = $last_id_entity;
 				$this->cPut( $refv_values_array, $save_changes );
-				$last_id_refv++;
+			}
+			else
+			{
+				echo "<br> Es del compiere original <br>";
 			}
 		}
 		else
 		{			
-			$values_array = $this->cFindByExpression( $referencev_name, false );
-			$last_id_refv = $values_array['AD_VAL_RULE_ID'];
-			echo "<br> existe $referencev_name con ID:$last_id_refv <br>";
+			$values_array = $this->cFindByExpression( $entity_name, false );
+			$last_id_entity = $values_array['AD_VAL_RULE_ID'];
+			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
 		}
-		return $last_id_refv;
+		return $last_id_entity;
 
 	} // end cMigrateByName
 
 	/**/
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
-		$last_id_refv = $this->cLastID() + 1; 
+		$last_id_entity = $this->cLastID() + 1; 
 		$lista    = $this->cFindAllByParentId( $parent_id ); 
-		foreach ($lista as $referencev_name) 
+		foreach ($lista as $entity_name) 
 		{ 
-			$this-> cMigrateByName( $referencev_name, $last_id_refv, $save_changes );
+			$this-> cMigrateByName( $entity_name, $last_id_entity, $save_changes );
 		} 
 
-	} // end cMigrate
+	} // end cMigrateByParentId
 
 } // end class
 ?>

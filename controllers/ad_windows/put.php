@@ -5,6 +5,7 @@
 include_once '../../models/AdWindow.php';
 include_once '../../models/AdTab.php';
 include_once '../../models/AdField.php';
+include_once '../../models/AdMenu.php';
 
 session_start(); 
 
@@ -14,9 +15,10 @@ $save_changes =  true; //  false; //
 $win_obj   = new AdWindow();
 $tab_obj   = new AdTab();
 $fld_obj   = new AdField();
+$menu_obj   = new AdMenu();
 
+$last_id_menu = $menu_obj->cLastID() + 1;
 $last_id_parent = $win_obj->cLastID() + 1;
-
 $last_id_gchild = $fld_obj->cLastID() + 1;
 
 foreach ($data as $item)
@@ -52,7 +54,12 @@ foreach ($data as $item)
 
 	} // end foreach 
 	$last_id_parent++;	
+
+	
+	//$menu_obj->cMigrateByName( $item['UPPER(NAME)'], $last_id_menu, $save_changes );
 	
 } // end foreach 
+
+
 
 ?>

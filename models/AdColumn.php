@@ -56,37 +56,31 @@ class AdColumn extends DataHandler
 	public function cFindByParentID( $parent_id )
 	{
 		$result = array();
-		
-		$mip = explode(".", $_SESSION['ip_destino'] );
-		$enlace_nombre = 'HBE_DESA_' . $mip[3]; //Database Link
-
-		$username   = $_SESSION['user_origen'];
-		$password   = $_SESSION['user_opw'];
-		$connection = oci_connect( $username, $password, $_SESSION['ip_origen'] . '/XE' );
-		
-		$query = 
+		$query  = 
 			" SELECT {$this->expression} 		
 			  FROM   COMPIERE.{$this->tablename} t
 			  WHERE  {$this->parent_tablename}_ID = {$parent_id} ";
-
 		echo "<br>$query<br>";
 
+		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+		
 		$stmt = oci_parse( $connection, $query );
 		if ( oci_execute( $stmt ) )
-		{}
+		{
+			 $nrows = oci_fetch_all($stmt, $res);
+		}
 		else
 		{ 
 			$e = oci_error($stmt); 
 			echo $e['message'] . '<br/>'; 
 		}
-		$nrows = oci_fetch_all($stmt, $res);
-
+		
 		oci_close($connection);
 		
 		return $res[$this->expression];
 	}
 
-	function cFindByExpression( $value, $parentID, $extern = true )
+	function cFindByExpression( $value, $parent_id, $extern = true )
 	{
 		$values_array = array();
 
@@ -100,7 +94,7 @@ class AdColumn extends DataHandler
 		}
 
 		$tarray = listarTiposDeTabla( $connection, $this->tablename );
-		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' AND t.{$this->parent_tablename}_ID = $parentID ";
+		$query  = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' AND t.{$this->parent_tablename}_ID = $parent_id ";
 		echo "<br> $query <br>";
 		
 		$stmt = oci_parse( $connection, $query );
@@ -143,6 +137,14 @@ class AdColumn extends DataHandler
 		$entity_name = $name;
 		$last_id_entity = $last_id;
 
+		if ( empty($parent_id) )
+		{
+			echo "<br> AD_Column_ID:: parent_id vacio <br>";
+			exit;
+		}
+		else
+			echo "<br/> Parent ID : $parent_id <br/>";
+
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
 		$exists = $this->cCount( $entity_name, $parent_id ); 
 		if ( $exists == 0 ) 
@@ -153,29 +155,30 @@ class AdColumn extends DataHandler
 			{
 				$values_array['AD_PROCESS_ID'] = 'NULL';
 
-				$elem_obj  = new AdElement();
+				echo "<br> AD_COLUMN:: verificando elemento debido a columna $entity_name ... <br>";
+				$elem_obj = new AdElement();
 				$values_array['AD_ELEMENT_ID'] = $elem_obj->cMigrateByPK( $values_array['AD_ELEMENT_ID'], $save_changes );
 				
 				echo "<br> AD_COLUMN:: verificando referencia debido a columna $entity_name ... <br>";
-				$ref_obj   = new AdReference(); 
+				$ref_obj = new AdReference(); 
 				if ( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'] != 0 )
 					$values_array[$ref_obj->getTablename() . '_VALUE_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
 				else
 					$values_array[ $ref_obj->getTablename() . '_VALUE_ID'] = 'NULL';
 
 				echo "<br> AD_COLUMN:: verificando val rule debido a columna $entity_name ... <br>";
-				$valrule_obj  = new AdValRule(); 
+				$valrule_obj = new AdValRule(); 
 				if ( $values_array[ $valrule_obj->getTablename() . '_ID'] != 0 )
 					$values_array[ $valrule_obj->getTablename() . '_ID'] = $valrule_obj->cMigrateByPK( $values_array['AD_VAL_RULE_ID'], $save_changes );
 				else
 					$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
+				echo '<br> val rule id: ' . $values_array[ $valrule_obj->getTablename() . '_ID'] . '<br>';
 
 				echo "<br> AD_COLUMN:: verificando tabla {$parent_id} debido a columna $entity_name ... <br>";
-				$table_obj    = new AdTable();
+				$table_obj = new AdTable();
 				$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $parent_id, true );
-
 			
-				echo "<br> migrando columna $entity_name.... <br>";
+				echo "<br> migrando columna $entity_name.... ($save_changes)<br>";
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				$this->cPut( $values_array, $save_changes );
 			}
@@ -186,9 +189,15 @@ class AdColumn extends DataHandler
 		}
 		else
 		{
-			$values_array = $this->cFindByExpression( $entity_name, false );
-			$last_id_entity = $values_array[ $this->tablename . '_ID' ];
-			echo "<br> existe $entity_name con ID:$last_id_entity <br>";
+			// OJO parent id 
+			$values_array = $this->cFindByExpression( $entity_name, $parent_id, false );
+			if ( !empty($values_array) )
+			{
+				$last_id_entity = $values_array[ $this->tablename . '_ID' ];
+				echo "<br> AD_COLUMN :: existe $entity_name con ID:$last_id_entity <br>";
+			}
+			else
+				echo "<br> AD_COLUMN :: existe $entity_name <br>";
 		}
 
 		return $last_id_entity;

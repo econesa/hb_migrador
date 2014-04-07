@@ -9,6 +9,7 @@ class AdTab extends DataHandler
 {
 	const TABLENAME         = 'AD_TAB';
 	const PARENT_TABLENAME  = 'AD_WINDOW';
+	private $indextable = 'AD_TABLE';
 	
 	public function getTablename( )
 	{
@@ -55,7 +56,7 @@ class AdTab extends DataHandler
 		}
 		catch( Exception $exc )
 		{
-			echo "Exception: $exc->getMessage() <br>";
+			echo " Exception: $exc->getMessage() <br> ";
 		}
 		
 		return $rs_count;
@@ -68,7 +69,10 @@ class AdTab extends DataHandler
 		$query   = 
 			" SELECT {$this->expression} 		
 			  FROM   COMPIERE.{$this->tablename} t
-			  WHERE  t.{$this->parent_tablename}_ID = {$parent_id} 
+			  WHERE  t.{$this->parent_tablename}_ID = {$parent_id} AND 
+			  		 NOT EXISTS ( 
+			  		 	SELECT 1 FROM $this->indextable ct WHERE ct.{$this->indextable}_ID = t.{$this->indextable}_ID AND IsView='Y'
+			  		 )
 			  ORDER BY {$this->tablename}_ID ";
 		// echo "<br> $query <br>";
 
@@ -103,45 +107,52 @@ class AdTab extends DataHandler
 		$query = " SELECT * FROM $this->tablename t WHERE $this->expression LIKE '$value' AND {$this->parent_tablename}_ID = $parentID ";
 		//echo "<br> $query <br>";
 
-		if ( $extern )
+		try
 		{
-			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		}
-		else
-		{
-			$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
-		}
+			if ( $extern )
+			{
+				$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			}
+			else
+			{
+				$connection = oci_connect( $this->username_d, $this->password_d, $this->path_d );
+			}	
 
-		$tarray = listarTiposDeTabla( $connection, $this->tablename );
+			$tarray = listarTiposDeTabla( $connection, $this->tablename );
 				
-		$stmt  = oci_parse( $connection, $query );
-		
-		if ( oci_execute( $stmt ) )
-		{ 
-			$values_array = oci_fetch_assoc( $stmt ); 
-			if ( !empty($values_array) )
+			$stmt  = oci_parse( $connection, $query );
+			
+			if ( oci_execute( $stmt ) )
 			{ 
-				foreach ( $values_array as $indice => $field )
-				{
-					if ( empty($field) )
+				$values_array = oci_fetch_assoc( $stmt ); 
+				if ( !empty($values_array) )
+				{ 
+					foreach ( $values_array as $indice => $field )
 					{
-						$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
+						if ( empty($field) )
+						{
+							$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
+						}
+						else 
+						{
+							$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
+						}		
+						$i++;
 					}
-					else 
-					{
-						$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
-					}		
-					$i++;
 				}
 			}
-		}
-		else
-		{
-			$e = oci_error( $stmt ); 
-	        echo $e['message']; 
-		}
+			else
+			{
+				$e = oci_error( $stmt ); 
+		        echo $e['message']; 
+			}
 
-		oci_close($connection);
+			oci_close($connection);
+		}
+		catch( Exception $exc )
+		{
+			echo "Exception: $exc->getMessage() <br>";
+		}
 
 		return $values_array;
 	} // end cFindByExpression
