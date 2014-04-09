@@ -1,8 +1,8 @@
 ﻿<?php 
 include_once '../../utils.php';
 include_once 'DataHandler.php';
-include_once 'AdWindow.php';
 include_once 'AdTree.php';
+include_once 'AdWindow.php';
 
 //session_start();
 
@@ -112,6 +112,24 @@ class AdMenu extends DataHandler
 	} // end cMigrateByPK
 	*/
 
+	public function loadDefaults( $values_array )
+	{
+		$v_array = $values_array;
+		
+		if ( $v_array['AD_FORM_ID'] == 0 )
+			$v_array['AD_FORM_ID'] = 'NULL';
+		if ( $v_array['AD_PROCESS_ID'] == 0 ) 
+			$v_array['AD_PROCESS_ID'] = 'NULL';
+		if ( $v_array['AD_TASK_ID'] == 0 )
+			$v_array['AD_TASK_ID'] = 'NULL';
+		if ( $v_array['AD_WORKBENCH_ID'] == 0 )
+			$v_array['AD_WORKBENCH_ID'] = 'NULL';	 
+		if ( $v_array['AD_WORKFLOW_ID'] == 0 )
+			$v_array['AD_WORKFLOW_ID'] = 'NULL';
+
+		return $v_array;
+	}
+
 	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
 		$entity_name = $name;
@@ -127,38 +145,27 @@ class AdMenu extends DataHandler
 			
 			$old_id = $values_array[ $this->tablename . '_ID' ];
 
-			if ( $values_array['AD_MENU_ID'] >= 5000000 )
+			if ( $values_array[$this->tablename . '_ID'] >= 5000000 )
 			{				
 				// se prepara consulta de migracion con id nuevo
 				$values_array['AD_MENU_ID'] = $last_id_entity;
 				
-				if ( $values_array['AD_FORM_ID'] == 0 )
-					$values_array['AD_FORM_ID'] = 'NULL';
-				if ( $values_array['AD_PROCESS_ID'] == 0 ) 
-					$values_array['AD_PROCESS_ID'] = 'NULL';
-				if ( $values_array['AD_TASK_ID'] == 0 )
-					$values_array['AD_TASK_ID'] = 'NULL';
-				if ( $values_array['AD_WORKBENCH_ID'] == 0 )
-					$values_array['AD_WORKBENCH_ID'] = 'NULL';	 
-				if ( $values_array['AD_WORKFLOW_ID'] == 0 )
-					$values_array['AD_WORKFLOW_ID'] = 'NULL';
+				$values_array = $this->loadDefaults( $values_array );
+
 				//********buscar el valor de la Ad_Window. La ventana tiene que existir en el destino. FK 116_233
-
+				echo "<br> {$this->tablename} :: migrando Ventana {$values_array['AD_WINDOW_ID']}.... <br>";
 				$win_obj  = new AdWindow();
-				//echo "<br>*+*+*+ verificando ventana {$values_array['AD_WINDOW_ID']} <br> ";
-				echo "*+*+*+";
 				$values_array['AD_WINDOW_ID'] = $win_obj->cMigrateByPK( $values_array['AD_WINDOW_ID'], $save_changes );
-				echo "*+*+*+";
-
+				
 				echo " menu extendido - $last_id_entity <br/>";
 				$this->cPut( $values_array, $save_changes );
-
 
 				//Buscar los datos completos del arbol. (Actualmente esta buscando una sola fila de la tabla). 
 				//OJO: Se necesitan buscar todas las filas de la tabla que contengan el NODE_ID.
 
 				$treeMM_obj   = new AdTreeNodeMM();	
 				$values_arrayTreeMM = $treeMM_obj->cFindAllTree( $old_id ); //Busca en el origen los datos de la fila
+
 				foreach ( $values_arrayTreeMM as $tree_values_array ) 
 				{
 					//Se prepara consulta de migracion con id nuevo
@@ -166,7 +173,6 @@ class AdMenu extends DataHandler
 					//********buscar el valor de la Ad_Tree_ID. El arbol (tree) tiene que existir en el destino.
 					
 					$treeMM_obj->cPut( $tree_values_array, $save_changes );
-
 				}
 				
 				/*

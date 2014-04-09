@@ -168,6 +168,20 @@ class AdTable extends DataHandler
 		return $values_array;
 	}
 
+	/**/
+	public function setNulls( $values_array )
+	{
+		$v_array = $values_array;
+
+		if ( empty($v_array['AD_VAL_RULE_ID']) 	) 	    $v_array['AD_VAL_RULE_ID']  = 'NULL';
+		if ( empty($v_array['PO_WINDOW_ID']) 	) 	    $v_array['PO_WINDOW_ID']    = 'NULL';
+		if ( empty($v_array['DATECOLUMN_ID']) 	) 	    $v_array['DATECOLUMN_ID']   = 'NULL';
+		if ( empty($v_array['BASE_TABLE_ID']) 	) 	    $v_array['BASE_TABLE_ID']   = 'NULL';
+		if ( empty($v_array['REFERENCED_TABLE_ID'])  )  $v_array['REFERENCED_TABLE_ID']   = 'NULL';
+
+		return $v_array;
+	}
+
 	public function cMigrateByPK( $pk_id, $save_changes = true )
 	{
 		$entity_name = $this->cFindNameBySPK( $pk_id );
@@ -180,16 +194,8 @@ class AdTable extends DataHandler
 	{
 		$entity_name = $name;
 		$last_id_entity = $last_id;
-		$old_id = 0;
-
-		/*
-		$seq_obj   = new AdSequence(); // TODO: verificar si la secuencia ya existe
-		$seq_array = $seq_obj->cFindByTablename( $values_array['TABLENAME'], $save_changes );
-		$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
-		$seq_obj->cPut( $seq_array, $save_changes );
-		*/
-
-		// verificar si el reference esta en el origen, en cuyo caso se migra.
+		
+		// verificar si no existe en el destino, en cuyo caso se migra.
 		$exists = $this->cCountByExpression( $entity_name ); 
 		if ($exists == 0) 
 		{ 
@@ -199,23 +205,21 @@ class AdTable extends DataHandler
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				echo "<br/>  elemento extendido <br/>";
-				echo 'se coloca val_rule en NULL <br/>';
-				$values_array['AD_VAL_RULE_ID'] = 'NULL';
-				$values_array['PO_WINDOW_ID']   = 'NULL';
-				$values_array['DATECOLUMN_ID']  = 'NULL';
-				$values_array['BASE_TABLE_ID']  = 'NULL';
-				$values_array['REFERENCED_TABLE_ID'] = 'NULL';
-
-				$old_id = $values_array[ $this->tablename . '_ID' ];
+				$values_array = $this->setNulls( $values_array );
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
+				echo "<br>{$this->tablename} :: migrando tabla $entity_name.... <br>";
 				$this->cPut( $values_array, $save_changes );
+
+				$seq_obj   = new AdSequence(); 
+				$seq_array = $seq_obj->cFindByTablename( $values_array['TABLENAME'], $save_changes );
+				$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
+				$seq_obj->cPut( $seq_array, $save_changes );
 			}
 			else
 			{
-				$values_array = $this->cFindByExpression( $name, false );
+				$values_array = $this->cFindByExpression( $entity_name, false );
 				$last_id_entity = $values_array[ $this->tablename . '_ID' ];
-				echo "<br> La tabla ya esta en compiere original - $name con ID:$last_id_entity <br>";		
+				echo "<br> La tabla ya esta en compiere original - $entity_name con ID:$last_id_entity <br>";		
 			}
 		}
 		else

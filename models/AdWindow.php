@@ -1,7 +1,7 @@
 <?php 
 include_once '../../utils.php';
 include_once 'DataHandler.php';
-
+include_once 'AdWindowAccess.php';
 //session_start();
 
 
@@ -78,6 +78,21 @@ class AdWindow extends DataHandler
 		return $last_id_entity;	
 	} // end cMigrateByPK
 
+	public function setNulls( $values_array )
+	{
+		$v_array = $values_array;
+
+		if ( empty($v_array['AD_CTXAREA_ID']) 	) 	$v_array['AD_CTXAREA_ID'] = 'NULL';
+		if ( empty($v_array['AD_IMAGE_ID']) 	) 	$v_array['AD_IMAGE_ID']   = 'NULL';
+		if ( empty($v_array['AD_COLOR_ID']) 	)	$v_array['AD_COLOR_ID']   = 'NULL';
+		if ( empty($v_array['DESCRIPTION']) 	) 	$v_array['DESCRIPTION']   = 'NULL';
+		if ( empty($v_array['HELP']) 			) 	$v_array['HELP']   	   	  = 'NULL'; 
+		if ( empty($v_array['ISCUSTOMDEFAULT']) )	$v_array['ISCUSTOMDEFAULT']  = 'NULL';
+		if ( empty($v_array['PROCESSING']) 		)	$v_array['PROCESSING']    = 'NULL';
+
+		return $v_array;
+	}
+
 	public function cMigrateByName( $name, $last_id_win, $save_changes = true )
 	{
 		$last_id_entity = $last_id_win;
@@ -87,15 +102,16 @@ class AdWindow extends DataHandler
 		if ($exists == 0) 
 		{
 			$values_array = $this->cFindByExpression( $entity_name );
-			if ( $values_array['AD_WINDOW_ID'] >= 5000000 )
+			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				//$values_array['AD_CLIENT_ID'] = $values_array['AD_ORG_ID'] = 0;
-				$values_array['AD_IMAGE_ID']  = $values_array['AD_CTXAREA_ID'] = $values_array['AD_COLOR_ID'] = 'NULL';
-				$values_array['AD_WINDOW_ID'] = $last_id_entity; // actualizo al ultimo id
-				
 				echo "<br> migrando ventana $entity_name.... <br>";
+				$values_array = $this->setNulls( $values_array );
+				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				$this->cPut( $values_array, $save_changes );
-				$last_id_win++;
+
+				$win_access_obj = new AdWindowAccess();
+				$win_access_obj->cGenerate( $values_array[ $this->tablename . '_ID' ], $values_array[ 'AD_USER_ID' ], $save_changes );
+
 			}
 			else
 			{

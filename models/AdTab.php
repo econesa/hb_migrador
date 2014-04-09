@@ -165,6 +165,22 @@ class AdTab extends DataHandler
 		return $last_id_entity;	
 	} // end cMigrateByPK
 
+	public function setNulls( $values_array )
+	{
+		$v_array = $values_array;
+
+		if ( empty($v_array['AD_CTXAREA_ID']) 	) 	 $v_array['AD_CTXAREA_ID']   = 'NULL';
+		if ( empty($v_array['AD_IMAGE_ID']) 	) 	 $v_array['AD_IMAGE_ID']     = 'NULL';
+		if ( empty($v_array['AD_PROCESS_ID']) 	)	 $v_array['AD_PROCESS_ID']   = 'NULL';
+		if ( empty($v_array['INCLUDED_TAB_ID']) )	 $v_array['INCLUDED_TAB_ID'] = 'NULL';
+		if ( empty($v_array['AD_COLUMN_ID']) )		 $v_array['AD_COLUMN_ID']    = 'NULL';
+		if ( empty($v_array['AD_COLUMNSORTORDER_ID']) )	 $v_array['AD_COLUMNSORTORDER_ID']  = 'NULL';
+		if ( empty($v_array['AD_COLUMNSORTYESNO_ID']) )	 $v_array['AD_COLUMNSORTYESNO_ID']  = 'NULL';
+		if ( empty($v_array['REFERENCED_TAB_ID']) )	 $v_array['REFERENCED_TAB_ID']  = 'NULL';
+
+		return $v_array;
+	}
+
 	/*  */
 	public function cMigrateByName( $name, $old_win_id, $parent_id, $save_changes = true )
 	{
@@ -177,35 +193,33 @@ class AdTab extends DataHandler
 		{
 			$values_array = $this->cFindByExpression( $entity_name, $old_win_id, true ); //
 
-			if ( $values_array['AD_TAB_ID'] >= 5000000 )
+			if ( $values_array[ $this->tablename . '_ID'] >= 5000000 )
 			{
-				echo "<br> AD_TAB:: migrando tabla con viejo id: {$values_array['AD_TABLE_ID']} debido a pestaña $entity_name .... <br>";
+				echo "<br>{$this->tablename}:: migrando tabla con viejo id: {$values_array['AD_TABLE_ID']} debido a pestaña $entity_name .... <br>";
 				$table_obj  = new AdTable();
 				$values_array['AD_TABLE_ID'] = $table_obj->cMigrateByPK( $values_array['AD_TABLE_ID'], $save_changes );	
 				
 				//$win_obj  = new AdWindow();
 				//$win_values_array = $win_obj->cFindByPK( $old_win_id, false );
-				$values_array['AD_WINDOW_ID'] = $parent_id;
+				$values_array[ $this->parent_tablename . '_ID'] = $parent_id;
 			
-				$values_array['AD_TAB_ID']   = $last_id_entity;
-				$values_array['AD_IMAGE_ID'] = $values_array['AD_PROCESS_ID'] = $values_array['AD_CTXAREA_ID'] = $values_array['INCLUDED_TAB_ID'] = 
-					$values_array['AD_COLUMN_ID'] = $values_array['AD_COLUMNSORTORDER_ID'] = $values_array['AD_COLUMNSORTYESNO_ID'] = 
-					$values_array['REFERENCED_TAB_ID'] = 'NULL';
+				$values_array[ $this->tablename . '_ID']   = $last_id_entity;
+				$values_array = $this->setNulls( $values_array );
 
-				echo "<br> migrando tab (pestaña) $entity_name.... <br>";
+				echo "<br>{$this->tablename} :: migrando tab (pestaña) $entity_name.... <br>";
 
 				$this->cPut( $values_array, $save_changes );
 			}
 			else
 			{
-				echo "<br/> El Tab ya esta en el compiere original. <br/>";
+				echo "<br/> El tab ya esta en el compiere original. <br/>";
 			}			
 		}
 		else
 		{
-			$values_array = $this->cFindByExpression( $entity_name, false );
+			$values_array = $this->cFindByExpression( $entity_name, $old_win_id, false );
 			$last_id_entity = $values_array[ $this->tablename . '_ID' ];
-			echo "<br> ya existe pestaña $entity_name con ID:$last_id_entity <br>";
+			echo "<br>{$this->tablename} :: ya existe pestaña $entity_name con ID:$last_id_entity <br>";
 		}
 
 		return $last_id_entity;

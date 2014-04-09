@@ -1,6 +1,7 @@
 <?php 
 //include '../utils.php';
-
+include_once 'AdElement.php';
+include_once 'AdReference.php';
 //session_start();
 
 class AdColumn extends DataHandler
@@ -60,24 +61,32 @@ class AdColumn extends DataHandler
 			" SELECT {$this->expression} 		
 			  FROM   COMPIERE.{$this->tablename} t
 			  WHERE  {$this->parent_tablename}_ID = {$parent_id} ";
-		echo "<br>$query<br>";
+		echo "<br> $this->tablename :: $query <br>";
 
-		$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
-		
-		$stmt = oci_parse( $connection, $query );
-		if ( oci_execute( $stmt ) )
+		try 
 		{
-			 $nrows = oci_fetch_all($stmt, $res);
+			$connection = oci_connect( $this->username_s, $this->password_s, $this->path_s );
+			
+			$stmt = oci_parse( $connection, $query );
+			if ( oci_execute( $stmt ) )
+			{
+				$nrows  = oci_fetch_all($stmt, $res);
+				$result = $res[$this->expression];
+			}
+			else
+			{ 
+				$e = oci_error($stmt); 
+				echo $e['message'] . '<br/>'; 
+			}
+			
+			oci_close($connection);
+		} 
+		catch( Exception $exc )
+		{
+			echo "Exception: $exc->getMessage() <br>";
 		}
-		else
-		{ 
-			$e = oci_error($stmt); 
-			echo $e['message'] . '<br/>'; 
-		}
-		
-		oci_close($connection);
-		
-		return $res[$this->expression];
+
+		return $result;
 	}
 
 	function cFindByExpression( $value, $parent_id, $extern = true )
@@ -118,7 +127,6 @@ class AdColumn extends DataHandler
 
 		} // execute 
 
-
 		oci_close($connection);
 
 		return $values_array;
@@ -132,11 +140,12 @@ class AdColumn extends DataHandler
 	} // end cMigrateByPK
 
 	/**/
-	public function cMigrateByName( $name, $parent_id, $last_id, $save_changes = true )
+	public function cMigrateByName( $name, $old_parent_id, $parent_id, $last_id, $save_changes = true )
 	{
 		$entity_name = $name;
 		$last_id_entity = $last_id;
 
+		/*
 		if ( empty($parent_id) )
 		{
 			echo "<br> AD_Column_ID:: parent_id vacio <br>";
@@ -144,12 +153,13 @@ class AdColumn extends DataHandler
 		}
 		else
 			echo "<br/> Parent ID : $parent_id <br/>";
-
+		*/
+		
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
 		$exists = $this->cCount( $entity_name, $parent_id ); 
 		if ( $exists == 0 ) 
 		{ 			
-			$values_array = $this->cFindByExpression( $entity_name, $parent_id );
+			$values_array = $this->cFindByExpression( $entity_name, $old_parent_id );
 			
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
@@ -174,9 +184,9 @@ class AdColumn extends DataHandler
 					$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
 				echo '<br> val rule id: ' . $values_array[ $valrule_obj->getTablename() . '_ID'] . '<br>';
 
-				echo "<br> AD_COLUMN:: verificando tabla {$parent_id} debido a columna $entity_name ... <br>";
+				echo "<br> AD_COLUMN:: verificando tabla {$old_parent_id} debido a columna $entity_name ... <br>";
 				$table_obj = new AdTable();
-				$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $parent_id, true );
+				$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $old_parent_id, true );
 			
 				echo "<br> migrando columna $entity_name.... ($save_changes)<br>";
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;

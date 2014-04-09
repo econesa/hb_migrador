@@ -52,8 +52,9 @@ class AdTreeNodeMM extends DataHandler
 
 	public function cFindAllTree( $pk_id, $extern = true )
 	{
-		$i = 0;
+		
 		$values_array  = array();
+	
 		$query = " SELECT  t.*
 				   FROM    COMPIERE.{$this->tablename} t
 				   WHERE   {$this->expression} = {$pk_id} ";
@@ -78,28 +79,26 @@ class AdTreeNodeMM extends DataHandler
 			{
 				$j = 0;
 				
-				/*$values_array[$j++] = oci_fetch_assoc($stmt);
-				$values_array[$j++] = oci_fetch_assoc($stmt);
-
-				print_r($values_array); exit;*/
-
-				while (($values_array[$j++] = oci_fetch_assoc($stmt)) != false) 
+				while ( ($values_array[$j] = oci_fetch_assoc($stmt) ) != false) 
 				{
-				   	// parsear data para poder colocarla en el insertar
-					foreach ( $values_array as $indice => $field )
+					$i = 0;	
+					foreach ($values_array[$j] as $index=>$field)
 					{
-						if ( empty($field) )
+						if ( empty( $field ) )
 						{
-							$values_array[$indice] = formatEmpty( $tarray[$i]['tipo'], $field );
+							$values_array[$j][$index] = formatEmpty( $tarray[$i]['tipo'], $field );
 						}
 						else
 						{
-							$values_array[$indice] = formatData( $tarray[$i]['tipo'], $field );
-						}
-						$i++;	
-					}	 
-				}					
-
+							$values_array[$j][$index] = formatData( $tarray[$i]['tipo'], $field );				
+						}	
+						++$i;			
+					}				
+					$j++;
+				}
+				unset($values_array[$j]);
+					/**/	
+				
 			} // execute 
 			else
 			{
