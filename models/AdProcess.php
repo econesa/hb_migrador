@@ -99,26 +99,29 @@ class AdProcess extends DataHandler
 		if ($exists == 0) 
 		{
 			// se buscan los datos completos de la fila
-			/*
+			
 			$values_array = $this->cFindByExpression( $entity_name );
-			if ( $values_array['AD_ELEMENT_ID'] >= 5000000 )
+			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{				
-				$values_array['AD_ELEMENT_ID'] = $last_id_entity;
-				echo " elemento extendido - $last_id_entity <br/>";
+				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				// se prepara consulta de migracion con id nuevo
-				$values_array['AD_REFERENCE_ID'] = 'NULL'; 
-				$values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
-				$values_array['AD_VAL_RULE_ID'] = 'NULL'; 
+				if ( empty($values_array['AD_WORKFLOW_ID']) )		$values_array['AD_WORKFLOW_ID'] = 'NULL'; 
+				if ( empty($values_array['AD_CTXAREA_ID']) )		$values_array['AD_CTXAREA_ID'] = 'NULL'; 
+				if ( empty($values_array['AD_BVIEW_ID']) )			$values_array['AD_BVIEW_ID'] = 'NULL';
+				if ( empty($values_array['AD_REPORTTEMPLATE_ID']) )	$values_array['AD_REPORTTEMPLATE_ID'] = 'NULL';
+				if ( empty($values_array['AD_REPORTVIEW_ID']) )		$values_array['AD_REPORTVIEW_ID'] = 'NULL';
+				if ( empty($values_array['ENTITYTYPE']) )			$values_array['ENTITYTYPE'] = 'NULL';
+				if ( empty($values_array['AD_PRINTFORMAT_ID']) )	$values_array['AD_PRINTFORMAT_ID'] = 'NULL';
 
 				$this->cPut( $values_array, $save_changes );
 			}
 			else
 			{
 				$values_array   = $this->cFindByExpression( $entity_name, false );
-				$last_id_entity = $values_array['AD_ELEMENT_ID'];
+				$last_id_entity = $values_array[ $this->tablename . '_ID' ];
 				echo "<br> El elemento ya esta en compiere base - $entity_name con ID:$last_id_entity <br>";
 			}
-			*/
+			/**/
 		}
 		else
 		{			
