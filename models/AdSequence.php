@@ -84,7 +84,36 @@ class AdSequence
 
 		return $values_array;
 	}
-	
+
+	public function cIncrease( $save_changes )
+	{
+		$seq_no = $this->cLastID( );
+		$query = " UPDATE AD_SEQUENCE
+				   SET    CURRENTNEXT= $seq_no + INCREMENTNO
+				   WHERE  NAME LIKE 'AD_Table' ";
+		echo "<br> $query <br>";
+		
+		$username   = $_SESSION['user_destino'];
+		$password   = $_SESSION['user_dpw'];
+		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
+
+		$stmt = oci_parse( $connection, $query );
+		if ( $save_changes )
+		{
+			if ( oci_execute( $stmt ) )
+			{
+				echo '<br> actualizado <br>';
+			}
+			else
+			{ 
+				$e = oci_error( $stmt ); 
+				echo $e['message'] . '<br/>'; 
+			}
+		}
+
+		oci_close( $connection );
+	}
+
 	/**/
 	public function cPut( $values_array, $save_changes )
 	{
@@ -102,7 +131,7 @@ class AdSequence
 		{
 			if ( oci_execute( $stmt ) )
 			{
-
+				echo '<br> insertado <br>';
 			}
 			else
 			{ 
