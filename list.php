@@ -118,6 +118,28 @@ $component_id = 'tableVR';
 <div id="toolbarVal">
     <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="procesar('#<?php echo $component_id; ?>', '<?php echo $foldername; ?>')" >Migrar</a>
 </div>
+
+<?php
+//-------------------------------------------//
+$tablename  = 'AD_PROCESS';
+$expression = 'UPPER(VALUE)';
+$foldername = 'ad_processes';
+$component_id = 'tablePR';
+?>
+<h3><?php echo $tablename; ?></h3>
+<table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto; height:auto;"
+		rownumbers="true" toolbar="#toolbarProcess"  url="./controllers/<?php echo $foldername; ?>/get.php" pagination="true" >
+  <thead>
+	 <tr>
+	   <th field="<?php echo $expression; ?>"><?php echo $expression; ?></th>         
+	 </tr>                          
+  </thead>	  
+</table>
+   
+<div id="toolbarProcess">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="procesar('#<?php echo $component_id; ?>', '<?php echo $foldername; ?>')" >Migrar</a>
+</div>
+
 <?php
 //-------------------------------------------//
 $tablename  = 'AD_TABLE';
