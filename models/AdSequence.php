@@ -48,7 +48,7 @@ class AdSequence
 		$values_array = array();
 		$tarray = listarTiposDeTabla( $connection, self::TABLENAME );
 
-		$query  =  ' SELECT * FROM ' . self::TABLENAME . ' t WHERE NAME LIKE ' . $tablename_value . ' '; 
+		$query  =  ' SELECT * FROM ' . self::TABLENAME . ' t WHERE UPPER(NAME) LIKE ' . strtoupper($tablename_value) . ' '; 
 		echo "<br/> $query <br/>";
 
 		$stmt = oci_parse( $connection, $query );
@@ -85,12 +85,12 @@ class AdSequence
 		return $values_array;
 	}
 
-	public function cIncrease( $save_changes )
+	public function cIncrease( $tablename_value, $save_changes )
 	{
 		$seq_no = $this->cLastID( );
 		$query = " UPDATE AD_SEQUENCE
 				   SET    CURRENTNEXT= $seq_no + INCREMENTNO
-				   WHERE  NAME LIKE 'AD_Table' ";
+				   WHERE  UPPER(NAME) LIKE '$tablename_value' ";
 		echo "<br> $query <br>";
 		
 		$username   = $_SESSION['user_destino'];

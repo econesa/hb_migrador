@@ -1,6 +1,6 @@
 ﻿<?php 
 //include '../utils.php';
-include_once 'DataHandler.php';
+include_once 'AdSequence.php';
 
 //session_start();
 
@@ -375,6 +375,10 @@ abstract class DataHandler
 		{
 			echo "Exception: $exc->getMessage() <br>";
 		}
+
+		// actualizar secuencia
+		$seq_obj   = new AdSequence(); 
+		$seq_obj->cIncrease( $this->tablename, $save_changes );	
 	
 	}
 

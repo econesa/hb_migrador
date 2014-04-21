@@ -2,6 +2,7 @@
 //include '../utils.php';
 include_once 'AdElement.php';
 include_once 'AdReference.php';
+include_once 'AdProcess.php';
 //session_start();
 
 class AdColumn extends DataHandler
@@ -168,8 +169,6 @@ class AdColumn extends DataHandler
 			
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
-				$values_array['AD_PROCESS_ID'] = 'NULL';
-
 				echo "<br> AD_COLUMN:: verificando elemento debido a columna $entity_name ... <br>";
 				$elem_obj = new AdElement();
 				$values_array['AD_ELEMENT_ID'] = $elem_obj->cMigrateByPK( $values_array['AD_ELEMENT_ID'], $save_changes );
@@ -188,6 +187,13 @@ class AdColumn extends DataHandler
 				else
 					$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
 				echo '<br> val rule id: ' . $values_array[ $valrule_obj->getTablename() . '_ID'] . '<br>';
+
+				echo "<br> AD_COLUMN:: verificando proceso debido a columna $entity_name ... <br>";
+				$proc_obj = new AdProcess(); 
+				if ( $values_array[ $proc_obj->getTablename() . '_ID'] != 0 )
+					$values_array[ $proc_obj->getTablename() . '_ID'] = $proc_obj->cMigrateByPK( $values_array[ $proc_obj->getTablename() . '_ID'], $save_changes );
+				else
+					$values_array[ $proc_obj->getTablename() . '_ID'] = 'NULL';
 
 				//echo "<br> AD_COLUMN:: verificando tabla {$old_parent_id} debido a columna $entity_name ... <br>";
 				$values_array[ 'AD_TABLE_ID' ] = $parent_id;

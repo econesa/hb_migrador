@@ -137,7 +137,7 @@ class AdReference extends DataHandler
 		if ( oci_execute( $stmt ) )
 		{
 			$values_array = oci_fetch_assoc( $stmt ); 
-			echo '<br/>'; print_r( $values_array ); echo '<br/>'; 
+			//echo '<br/>'; print_r( $values_array ); echo '<br/>'; 
 
 			$i = 0;
 
