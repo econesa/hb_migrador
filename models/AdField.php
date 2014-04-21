@@ -141,7 +141,6 @@ class AdField extends DataHandler
 		$values_array['AD_FIELDGROUP_ID'] = 'NULL';
 
 		echo "<br> AD_FIELD:: verificando referencia {$values_array['AD_COLUMN_ID']} debido a campo $entity_name ... <br>";
-		$ref_obj   = new AdReference(); 
 		if ( $values_array[ $ref_obj->getTablename() . '_ID'] != 0 )
 			$values_array[$ref_obj->getTablename() . '_ID'] = $ref_obj->cMigrateByPK( $values_array[ $ref_obj->getTablename() . '_VALUE_ID'], $save_changes );
 		else

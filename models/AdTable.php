@@ -213,7 +213,13 @@ class AdTable extends DataHandler
 				$seq_obj   = new AdSequence(); 
 				$seq_array = $seq_obj->cFindByTablename( $values_array['TABLENAME'], $save_changes );
 				$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
+				$seq_array['CREATEDBY'] = $seq_array['UPDATEDBY'] = 100;		
+
 				$seq_obj->cPut( $seq_array, $save_changes );
+
+				// incrementar secuencia de AD_TABLE
+				$seq_obj->cIncrease( $save_changes );	
+
 			}
 			else
 			{

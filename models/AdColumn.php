@@ -135,7 +135,12 @@ class AdColumn extends DataHandler
 	public function cMigrateByPK( $pk_id, $parent_id, $save_changes = true )
 	{
 		$entity_name = $this->cFindNameBySPK( $pk_id );
-		$last_id_entity = $this->cMigrateByName( $entity_name, $parent_id, $this->cLastID() + 1, $save_changes );
+
+		echo "<br> {$this->tablename} :: verificando tabla {$parent_id} debido a columna $entity_name ... <br>";
+		$table_obj = new AdTable();
+		$new_parent_id = $table_obj->cMigrateByPK( $parent_id, true );
+
+		$last_id_entity = $this->cMigrateByName( $entity_name, $parent_id, $new_parent_id, $this->cLastID() + 1, $save_changes );
 		return $last_id_entity;	
 	} // end cMigrateByPK
 
@@ -154,7 +159,7 @@ class AdColumn extends DataHandler
 		else
 			echo "<br/> Parent ID : $parent_id <br/>";
 		*/
-		
+
 		// verificar si el reference esta en el origen, en cuyo caso se migra.
 		$exists = $this->cCount( $entity_name, $parent_id ); 
 		if ( $exists == 0 ) 
@@ -184,9 +189,8 @@ class AdColumn extends DataHandler
 					$values_array[ $valrule_obj->getTablename() . '_ID'] = 'NULL';
 				echo '<br> val rule id: ' . $values_array[ $valrule_obj->getTablename() . '_ID'] . '<br>';
 
-				echo "<br> AD_COLUMN:: verificando tabla {$old_parent_id} debido a columna $entity_name ... <br>";
-				$table_obj = new AdTable();
-				$values_array[ 'AD_TABLE_ID' ] = $table_obj->cMigrateByPK( $old_parent_id, true );
+				//echo "<br> AD_COLUMN:: verificando tabla {$old_parent_id} debido a columna $entity_name ... <br>";
+				$values_array[ 'AD_TABLE_ID' ] = $parent_id;
 			
 				echo "<br> migrando columna $entity_name.... ($save_changes)<br>";
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;

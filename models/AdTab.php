@@ -195,7 +195,7 @@ class AdTab extends DataHandler
 
 			if ( $values_array[ $this->tablename . '_ID'] >= 5000000 )
 			{
-				echo "<br>{$this->tablename}:: migrando tabla con viejo id: {$values_array['AD_TABLE_ID']} debido a pestaña $entity_name .... <br>";
+				echo "<br>{$this->tablename}:: se verifica tabla con id origen: {$values_array['AD_TABLE_ID']} debido a pesta&ntilde;a $entity_name .... <br>";
 				$table_obj  = new AdTable();
 				$values_array['AD_TABLE_ID'] = $table_obj->cMigrateByPK( $values_array['AD_TABLE_ID'], $save_changes );	
 				
