@@ -152,6 +152,8 @@ class AdField extends DataHandler
 		//P4
 		// se prepara consulta de migracion con id nuevo
 		echo "<br> migrando field $entity_name ... <br>";
+
+		unset( $values_array[ 'AD_USER_ID' ] ); 
 		$this->cPut( $values_array, $save_changes );
 
 		return $last_id_entity;

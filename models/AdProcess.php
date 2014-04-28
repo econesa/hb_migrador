@@ -102,18 +102,42 @@ class AdProcess extends DataHandler
 			
 			$values_array = $this->cFindByExpression( $entity_name );
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
-			{				
+			{
+				// buscar parametros 
+				$param_obj     = new AdProcessParam();
+				$last_id_child = $param_obj->cLastID() + 1;
+				$old_parent_id = $values_array[ $this->tablename . '_ID' ];
+				$child_name_array = $param_obj->cFindByParentID( $values_array[ $this->tablename . '_ID' ] );
+
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				// se prepara consulta de migracion con id nuevo
-				if ( empty($values_array['AD_WORKFLOW_ID']) )		$values_array['AD_WORKFLOW_ID'] = 'NULL'; 
-				if ( empty($values_array['AD_CTXAREA_ID']) )		$values_array['AD_CTXAREA_ID'] = 'NULL'; 
-				if ( empty($values_array['AD_BVIEW_ID']) )			$values_array['AD_BVIEW_ID'] = 'NULL';
-				if ( empty($values_array['AD_REPORTTEMPLATE_ID']) )	$values_array['AD_REPORTTEMPLATE_ID'] = 'NULL';
-				if ( empty($values_array['AD_REPORTVIEW_ID']) )		$values_array['AD_REPORTVIEW_ID'] = 'NULL';
-				if ( empty($values_array['ENTITYTYPE']) )			$values_array['ENTITYTYPE'] = 'NULL';
-				if ( empty($values_array['AD_PRINTFORMAT_ID']) )	$values_array['AD_PRINTFORMAT_ID'] = 'NULL';
+				if ( empty($values_array['AD_WORKFLOW_ID']) 	)	 $values_array['AD_WORKFLOW_ID'] = 'NULL'; 
+				if ( empty($values_array['AD_CTXAREA_ID']) 		)	 $values_array['AD_CTXAREA_ID'] = 'NULL'; 
+				if ( empty($values_array['AD_BVIEW_ID']) 		)	 $values_array['AD_BVIEW_ID'] = 'NULL';
+				if ( empty($values_array['AD_REPORTTEMPLATE_ID']) )	 $values_array['AD_REPORTTEMPLATE_ID'] = 'NULL';
+				if ( empty($values_array['AD_REPORTVIEW_ID']) 	)	 $values_array['AD_REPORTVIEW_ID'] = 'NULL';
+				if ( empty($values_array['ENTITYTYPE']) 		)	 $values_array['ENTITYTYPE'] = 'NULL';
+				if ( empty($values_array['AD_PRINTFORMAT_ID']) 	)	 $values_array['AD_PRINTFORMAT_ID'] = 'NULL';
 
 				$this->cPut( $values_array, $save_changes );
+
+				// actualizar secuencia
+				/*
+				$seq_obj   = new AdSequence(); 
+				$seq_array = $seq_obj->cFindByTablename( "DocumentNo_{$values_array['TABLENAME']}", $save_changes );
+				$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
+				$seq_array['CREATEDBY'] = $seq_array['UPDATEDBY'] = 100;
+				$seq_obj->cPut( $seq_array, $save_changes );
+				*/
+
+				// migrar parametros de la tabla
+				foreach ($child_name_array as $childname)
+				{
+					$param_obj->cMigrateByName( $childname, $old_parent_id, $last_id_entity, $last_id_child, $save_changes );
+					
+					$last_id_child++;
+				}
+
 			}
 			else
 			{
@@ -136,7 +160,7 @@ class AdProcess extends DataHandler
 	public function cMigrateByParentId( $parent_id, $save_changes = true )
 	{
 		$id_old  = $parent_id;
-		$tmp_obj = new TAdMig( $save_changes );
+		//$tmp_obj = new TAdMig( $save_changes );
 
 		$last_id_elem = $this->cLastID() + 1;
 		$lista  = $this->cFindAllByParentId( $id_old );

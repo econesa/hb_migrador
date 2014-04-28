@@ -207,6 +207,7 @@ class AdTab extends DataHandler
 				$values_array = $this->setNulls( $values_array );
 
 				echo "<br>{$this->tablename} :: migrando tab (pestaña) $entity_name.... <br>";
+				unset( $values_array[ 'AD_USER_ID' ] );
 
 				$this->cPut( $values_array, $save_changes );
 			}

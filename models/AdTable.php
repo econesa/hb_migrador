@@ -1,6 +1,7 @@
 <?php 
 include_once 'AdElement.php';
 include_once 'AdReference.php';
+include_once 'AdColumn.php';
 include_once 'AdSequence.php';
 include_once 'AdValRule.php';
 include_once 'DataHandler.php';
@@ -189,10 +190,13 @@ class AdTable extends DataHandler
 		return $last_id_entity;	
 	} // end cMigrateByPK
 
-	/*  */
+	/* 
+	  Migracion de tablas. También se migran las columnas aqui para asegurar que ésta sea completa 
+	  - algunas columnas son requeridas por compiere y no son utilizadas por las ventanas directamente - 
+	*/
 	public function cMigrateByName( $name, $last_id, $save_changes = true )
 	{
-		$entity_name = $name;
+		$entity_name    = $name;
 		$last_id_entity = $last_id;
 		
 		// verificar si no existe en el destino, en cuyo caso se migra.
@@ -205,26 +209,43 @@ class AdTable extends DataHandler
 
 			if ( $values_array[ $this->tablename . '_ID' ] >= 5000000 )
 			{
+				// buscar columnas 
+				$col_obj     = new AdColumn();
+				$last_id_col = $col_obj->cLastID() + 1;
+				$old_parent_id = $values_array[ $this->tablename . '_ID' ];
+				$child_name_array = $col_obj->cFindByParentID( $values_array[ $this->tablename . '_ID' ] );
+
+				// preparar y crear tabla
 				$values_array = $this->setNulls( $values_array );
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
 				echo "<br>{$this->tablename} :: migrando tabla $entity_name.... <br>";
+				//echo '<br/>'; print_r($values_array); echo '<br/>';
+				unset( $values_array[ 'AD_USER_ID' ] ); 
 				$this->cPut( $values_array, $save_changes );
 
 				// actualizar secuencia
 				$seq_obj   = new AdSequence(); 
 				$seq_array = $seq_obj->cFindByTablename( "{$values_array['TABLENAME']}", $save_changes );
 				$seq_array['AD_SEQUENCE_ID'] = $seq_obj->cLastID( ) + 1;
-				$seq_array['CREATEDBY'] = $seq_array['UPDATEDBY'] = 100;		
-
+				$seq_array['CREATEDBY'] = $seq_array['UPDATEDBY'] = 100;
 				$seq_obj->cPut( $seq_array, $save_changes );
-				$seq_obj->cIncrease( $this->tablename, $save_changes );	
+
+				// migrar columnas de la tabla
+				foreach ($child_name_array as $childname)
+				{
+					$col_obj->cMigrateByName( $childname, $old_parent_id, $last_id_entity, $last_id_col, $save_changes );
+					
+					$last_id_col++;
+				}
+
 			}
 			else
 			{
 				$values_array = $this->cFindByExpression( $entity_name, false );
 				$last_id_entity = $values_array[ $this->tablename . '_ID' ];
 				echo "<br> La tabla ya esta en compiere original - $entity_name con ID:$last_id_entity <br>";		
-			}
+			}			
+
 		}
 		else
 		{

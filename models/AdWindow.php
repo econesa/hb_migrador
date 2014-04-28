@@ -107,10 +107,12 @@ class AdWindow extends DataHandler
 				echo "<br> migrando ventana $entity_name.... <br>";
 				$values_array = $this->setNulls( $values_array );
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
+
+				unset( $values_array[ 'AD_USER_ID' ] );
 				$this->cPut( $values_array, $save_changes );
 
 				$win_access_obj = new AdWindowAccess();
-				$win_access_obj->cGenerate( $values_array[ $this->tablename . '_ID' ], $values_array[ 'AD_USER_ID' ], $save_changes );
+				$win_access_obj->cGenerate( $values_array[ $this->tablename . '_ID' ], $values_array[ 'CREATEDBY' ], $save_changes );
 
 			}
 			else

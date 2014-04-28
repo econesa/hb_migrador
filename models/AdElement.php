@@ -136,7 +136,8 @@ class AdElement extends DataHandler
 				$values_array['AD_REFERENCE_ID'] = 'NULL'; 
 				$values_array['AD_REFERENCE_VALUE_ID'] = 'NULL';
 				$values_array['AD_VAL_RULE_ID'] = 'NULL'; 
-
+				
+				unset( $values_array[ 'AD_USER_ID' ] ); 
 				$this->cPut( $values_array, $save_changes );
 			}
 			else

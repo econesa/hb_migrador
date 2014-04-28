@@ -199,7 +199,11 @@ class AdColumn extends DataHandler
 				$values_array[ 'AD_TABLE_ID' ] = $parent_id;
 			
 				echo "<br> migrando columna $entity_name.... ($save_changes)<br>";
+				//echo '<br/>'; print_r($values_array); echo '<br/>';
+
 				$values_array[ $this->tablename . '_ID' ] = $last_id_entity;
+
+				unset( $values_array[ 'AD_USER_ID' ] ); 
 				$this->cPut( $values_array, $save_changes );
 			}
 			else

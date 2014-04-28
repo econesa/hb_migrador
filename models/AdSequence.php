@@ -87,9 +87,8 @@ class AdSequence
 
 	public function cIncrease( $tablename_value, $save_changes )
 	{
-		$seq_no = $this->cLastID( );
 		$query = " UPDATE AD_SEQUENCE
-				   SET    CURRENTNEXT= $seq_no + INCREMENTNO
+				   SET    CURRENTNEXT = CURRENTNEXT + INCREMENTNO
 				   WHERE  UPPER(NAME) LIKE '$tablename_value' ";
 		echo "<br> $query <br>";
 		
@@ -122,6 +121,19 @@ class AdSequence
 		$connection = oci_connect( $username, $password, $_SESSION['ip_destino'] . '/XE' );
 		
 		$insert_q = dameElInsertParcialDeLaTabla( $connection, self::TABLENAME );	
+
+		//echo '<br/>'; print_r($values_array); echo '<br/>';
+
+		unset( $values_array[ 'ISAPPROVED' ] ); 
+		unset( $values_array[ 'DATEPROCESSED' ] ); 
+		unset( $values_array[ 'SYNCHRONIZEDEFAULTS' ] ); 
+		unset( $values_array[ 'SYSTEMSTATUS' ] );  
+		unset( $values_array[ 'HBE_CURRENTNEXT' ] ); 
+		unset( $values_array[ 'HBE_CURRENTNEXTSYS' ] ); 
+		unset( $values_array[ 'HBE_INCREMENTNO' ] ); 
+		unset( $values_array[ 'HBE_PREFIX' ] ); 
+		unset( $values_array[ 'HBE_SUFFIX' ] ); 
+		unset( $values_array[ 'HBE_STARTNO' ] ); 
 
 		$query    = $insert_q . ' VALUES (' . implode(", ", $values_array) . ')';
 		echo "<br> $query <br>";

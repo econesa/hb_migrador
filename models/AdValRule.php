@@ -92,12 +92,13 @@ class AdValRule extends DataHandler
 		$exists = $this->cCountByExpression( $entity_name ); 
 		if ( $exists == 0 ) 
 		{ 
-			$refv_values_array = $this->cFindByExpression( $entity_name );
-			if ( $refv_values_array['AD_VAL_RULE_ID'] >= 5000000 )
+			$values_array = $this->cFindByExpression( $entity_name );
+			if ( $values_array['AD_VAL_RULE_ID'] >= 5000000 )
 			{
 				//echo " elemento extendido <br/>";
-				$refv_values_array['AD_VAL_RULE_ID'] = $last_id_entity;
-				$this->cPut( $refv_values_array, $save_changes );
+				$values_array['AD_VAL_RULE_ID'] = $last_id_entity;
+				unset( $values_array[ 'AD_USER_ID' ] ); 
+				$this->cPut( $values_array, $save_changes );
 			}
 			else
 			{
