@@ -31,9 +31,7 @@
  </head>
  <body> 
 
- 	<?php
-	//include 'utils.php';
-
+<?php
 	session_start(); 
 
 	// cargar sesion
@@ -53,16 +51,44 @@
 		$_SESSION['user_destino'] = 'compiere';
 		$_SESSION['user_dpw'] 	  = 'compiere'; //'oracle'//
 	}
-
-	$tablename  = 'AD_ELEMENT';
-	$expression = 'UPPER(COLUMNNAME)';
-	$foldername = 'ad_elements';
-	$component_id = 'tt';
-	?>
+?>
 
 	<form method="post" action="<?php echo "./cerrar.php"; ?>">
 	  <input type="submit" value="Cerrar Sesion" />
 	</form>
+
+
+<h2>Diferencias Estructurales</h2>
+<?php
+//-------------------------------------------//
+$tablename  = 'AD_TABLE';
+$expression = 'NAME';
+$foldername = 'structures';
+$component_id = 'tte0';
+?>
+<table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto;height:auto;" url="./controllers/<?php echo $foldername; ?>/get.php"
+		rownumbers="true" toolbar="#toolbar2" pagination="true" >
+  <thead>
+	 <tr>
+	   <th field="TABLENAME">TABLENAME</th>   
+	   <th field="<?php echo $expression; ?>"><?php echo $expression; ?></th>   
+	   <th field="DATA_TYPE">DATA_TYPE</th> 
+	 </tr>                          
+  </thead>                                                     
+</table>
+<div id="toolbar2">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="procesar('#<?php echo $component_id; ?>', '<?php echo $foldername; ?>')">Migrar</a>
+</div>
+<br/>
+
+<?php
+//-------------------------------------------//
+$tablename  = 'AD_ELEMENT';
+$expression = 'UPPER(COLUMNNAME)';
+$foldername = 'ad_elements';
+$component_id = 'tt';
+?>
+<h2>Diferencias Data</h2>
 
 <h3><?php echo $tablename; ?></h3>
 <table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto; height:auto;"
@@ -149,14 +175,14 @@ $component_id = 'tt2';
 ?>
 <h3><?php echo $tablename; ?></h3>
 <table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto;height:auto;" url="./controllers/<?php echo $foldername; ?>/get.php"
-		rownumbers="true" toolbar="#toolbar2" >
+		rownumbers="true" toolbar="#toolbarTable" pagination="true" >
   <thead>
 	 <tr>
 	   <th field="<?php echo $expression; ?>"><?php echo $expression; ?></th>         
 	 </tr>                          
   </thead>                                                     
 </table>
-<div id="toolbar2">
+<div id="toolbarTable">
     <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="procesar('#<?php echo $component_id; ?>', '<?php echo $foldername; ?>')">Migrar</a>
 </div>
 <?php
@@ -169,7 +195,7 @@ $component_id = 'tt4';
 ?>
 <h3><?php echo $tablename; ?></h3>
 <table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto;height:auto;" url="./controllers/<?php echo $foldername; ?>/get.php"
-		rownumbers="true" toolbar="#toolbarWin" >
+		rownumbers="true" toolbar="#toolbarWin" pagination="true" >
   <thead>
 	 <tr>
 	   <th field="<?php echo 'UPPER(NAME)'; ?>"><?php echo 'UPPER(NAME)'; ?></th>         
@@ -193,7 +219,7 @@ $component_id = 'tt5';
 ?>
 <h3><?php echo $tablename; ?></h3>
 <table 	id="<?php echo $component_id; ?>" class="easyui-datagrid" style="width:auto;height:auto;" url="./controllers/<?php echo $foldername; ?>/get.php"
-		rownumbers="true" toolbar="#toolbarMenu" >
+		rownumbers="true" toolbar="#toolbarMenu" pagination="true">
   <thead>
 	 <tr>
 	   <th field="<?php echo 'UPPER(NAME)'; ?>"><?php echo 'UPPER(NAME)'; ?></th>         

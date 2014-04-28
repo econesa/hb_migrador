@@ -1,5 +1,90 @@
  <?php
 
+function cDiferenciarEstructuraEnJSON( $tablename, $page, $rows, $offset  )
+{
+	$result = array();
+	
+	$mip = explode(".", $_SESSION['ip_destino'] );
+	$enlace_nombre = 'HBE_DESA_' . $mip[3]; //Database Link
+
+	$conn1_path = $_SESSION['ip_origen'] . '/XE';
+	$username1  = $_SESSION['user_origen'];
+	$password1  = $_SESSION['user_opw'];
+	$con_local  = oci_connect( $username1, $password1, $conn1_path );
+
+	/*
+	$conn2_path = $ip_destino . '/XE';
+	$username2  = $_SESSION['user_destino'];
+	$password2  = $_SESSION['user_dpw'];
+	$c2 	    = oci_connect( $username, $password2, $conn2_path ); 
+	*/
+	
+	$result = diferenciarEstructuraEnJSON( $con_local, $enlace_nombre, $tablename, $page, $rows, $offset );
+	
+	oci_close($con_local);
+	
+	return $result;
+}
+
+function diferenciarEstructuraEnJSON( $conn, $enlace, $tablename, $page, $rows, $offset  )
+{
+	$result = array();
+	$offset2 = 0;
+	// OR table_name LIKE \'HB%\', nullable "NULLABLE"
+
+	$query = ' 	SELECT  table_name "TABLENAME", column_name "NAME", data_type "DATA_TYPE"
+				FROM    user_tab_columns t
+				WHERE   table_name LIKE \'M_%\' 
+				 AND table_name NOT LIKE \'M_INOUT\' AND table_name NOT LIKE \'M_INOUTLINECONFIRM\' AND table_name NOT LIKE \'M_INOUT_CABECERA_V\' 
+				 AND table_name NOT LIKE \'M_INOUT_CABECERA_VT\'  AND table_name NOT LIKE \'M_INOUT_LINEA_V\'  AND table_name NOT LIKE \'M_INOUT_LINEA_VT\' 
+				 
+
+				minus
+
+				SELECT	table_name "TABLENAME", column_name "NAME", data_type "DATA_TYPE"
+				FROM 	user_tab_columns@"HBE_DESA_143" t2
+				WHERE 	table_name LIKE \'M_%\' 
+				AND table_name NOT LIKE \'M_INOUT\' AND table_name NOT LIKE \'M_INOUTLINECONFIRM\' AND table_name NOT LIKE \'M_INOUT_CABECERA_V\' 
+				 AND table_name NOT LIKE \'M_INOUT_CABECERA_VT\'  AND table_name NOT LIKE \'M_INOUT_LINEA_V\'  AND table_name NOT LIKE \'M_INOUT_LINEA_VT\'
+				  
+				';
+
+	//echo "<br/>$query<br/>"; // OJO al imprimir no funciona UI
+
+	$stmt = oci_parse( $conn, $query );
+	
+	if ( oci_execute( $stmt ) )
+	{
+		$row = oci_fetch_row($stmt);
+		$result["total"] = $row[0];
+		$offset2 = $offset + $rows;
+	}
+		
+	$query = 
+		" SELECT outer.*
+		  FROM
+		    (SELECT ROWNUM rn, inner.* FROM
+  		      ( $query ) inner) outer
+		  WHERE outer.rn>=$offset AND outer.rn<=$offset2		  
+		";
+	//echo '<br>' . $query . '<br><br>'; 
+	$stmt = oci_parse( $conn, $query );
+
+	if ( oci_execute( $stmt ) )
+	{
+		$obj_array = array();
+		while ( ($row = oci_fetch_object($stmt)) != false )
+		{
+			array_push($obj_array, $row);
+		}
+		if (empty($obj_array)) array_push($obj_array, "$offset $rows");
+		$result['rows'] =  $obj_array;
+	}
+
+	return json_encode($result);
+}
+
+
 function cDiferenciarEnJSON( $tablename, $expression, $page, $rows, $offset  )
 {
 	$result = array();
@@ -33,15 +118,16 @@ function diferenciarEnJSON( $conn, $enlace, $tablename, $expression, $page, $row
 
 	//echo "<br/>$enlace<br/>";
 
-	$query = 
-		" SELECT   COUNT(*) 
-		  FROM
-  		   (SELECT $expression 		
-		    FROM   COMPIERE.$tablename t
-		      MINUS
-		    SELECT $expression 
-		    FROM   COMPIERE.$tablename@$enlace t2)
-		";
+	$query = " 	SELECT   COUNT(*) 
+				FROM
+		  		   (SELECT $expression 		
+				    FROM   COMPIERE.$tablename t
+				      MINUS
+				    SELECT $expression 
+				    FROM   COMPIERE.$tablename@$enlace t2)
+				";
+	//echo "<br/>$query<br/>"; // OJO al imprimir no funciona UI
+
 	$stmt = oci_parse( $conn, $query );
 	
 	if ( oci_execute( $stmt ) )
