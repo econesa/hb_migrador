@@ -1,6 +1,7 @@
 ﻿<?php 
 include_once '../../utils.php';
 include_once 'DataHandler.php';
+include_once 'AdProcessParam.php';
 
 //session_start();
 
@@ -118,6 +119,8 @@ class AdProcess extends DataHandler
 				if ( empty($values_array['AD_REPORTVIEW_ID']) 	)	 $values_array['AD_REPORTVIEW_ID'] = 'NULL';
 				if ( empty($values_array['ENTITYTYPE']) 		)	 $values_array['ENTITYTYPE'] = 'NULL';
 				if ( empty($values_array['AD_PRINTFORMAT_ID']) 	)	 $values_array['AD_PRINTFORMAT_ID'] = 'NULL';
+
+				unset( $values_array[ 'AD_USER_ID' ] ); 
 
 				$this->cPut( $values_array, $save_changes );
 
